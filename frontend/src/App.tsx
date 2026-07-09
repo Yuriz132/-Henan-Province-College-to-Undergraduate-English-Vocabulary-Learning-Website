@@ -6,6 +6,7 @@ import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { PageTransition } from "@/components/PageTransition";
 import { LiquidBackground } from "@/components/LiquidBackground";
 import { Navbar } from "@/components/Navbar";
+import { PomodoroTimer } from "@/components/PomodoroTimer";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 import Flashcards from "./pages/Flashcards";
@@ -45,6 +46,7 @@ function App() {
               <Route path="/starred" data-genie-title="生词本" data-genie-key="Starred" element={<PageTransition transition="fade"><Starred /></PageTransition>} />
               <Route path="*" data-genie-key="NotFound" data-genie-title="Not Found" element={<PageTransition transition="fade"><NotFound /></PageTransition>} />
             </AnimatedRoutes>
+            <PomodoroTimer />
           </main>
         </BrowserRouter>
       </TooltipProvider>
