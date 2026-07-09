@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2 } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +63,16 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
 
   const toggleFlip = useCallback(() => setFlipped((f) => !f), []);
 
+  const speak = useCallback(() => {
+    if (current && 'speechSynthesis' in window) {
+      const utter = new SpeechSynthesisUtterance(current.word);
+      utter.lang = 'en-US';
+      utter.rate = 0.85;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+  }, [current]);
+
   // 切换模式时翻回正面
   const toggleMode = useCallback(() => {
     setFlipped(false);
@@ -105,6 +115,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       {current.phonetic && (
         <p className="relative z-[2] mt-3 text-center font-mono text-lg text-muted-foreground">{current.phonetic}</p>
       )}
+      <button
+        onClick={(e) => { e.stopPropagation(); speak(); }}
+        className="liquid-glass liquid-glass-shine relative z-[2] mt-5 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
+      >
+        <Volume2 className="h-4 w-4" /> 发音
+      </button>
     </>
   ) : (
     <>
@@ -122,7 +138,13 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       {current.phonetic && (
         <p className="relative z-[2] mb-3 text-center font-mono text-base text-muted-foreground">{current.phonetic}</p>
       )}
-      <p className="relative z-[2] max-w-xl text-center text-lg leading-relaxed text-foreground" style={{ opacity: 0.9 }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); speak(); }}
+        className="liquid-glass liquid-glass-shine relative z-[2] mt-4 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
+      >
+        <Volume2 className="h-4 w-4" /> 发音
+      </button>
+      <p className="relative z-[2] mt-4 max-w-xl text-center text-lg leading-relaxed text-foreground" style={{ opacity: 0.9 }}>
         {current.meaning}
       </p>
     </>
@@ -137,6 +159,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       {current.phonetic && (
         <p className="relative z-[2] mt-3 text-center font-mono text-lg text-muted-foreground">{current.phonetic}</p>
       )}
+      <button
+        onClick={(e) => { e.stopPropagation(); speak(); }}
+        className="liquid-glass liquid-glass-shine relative z-[2] mt-5 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
+      >
+        <Volume2 className="h-4 w-4" /> 发音
+      </button>
     </>
   );
 
@@ -199,12 +227,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       >
         <div className="flip-card-inner">
           {/* 正面 */}
-          <div className="flip-card-face liquid-glass p-8" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
+          <div className="flip-card-face liquid-glass p-8 pb-12" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
             {frontContent}
             <p className="absolute bottom-4 z-[2] text-xs text-muted-foreground/60">点击翻面 (空格)</p>
           </div>
           {/* 背面 */}
-          <div className="flip-card-face flip-card-back liquid-glass-accent liquid-glass p-8"
+          <div className="flip-card-face flip-card-back liquid-glass-accent liquid-glass p-8 pb-12"
             style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
           >
             {backContent}

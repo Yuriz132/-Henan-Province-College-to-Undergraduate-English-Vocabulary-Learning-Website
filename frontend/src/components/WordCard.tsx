@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, Volume2 } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,17 @@ interface WordCardProps {
 
 /** 单词展示卡片 — 液态玻璃风格 */
 export function WordCard({ word, starred, known, onToggleStar, onClick, compact }: WordCardProps) {
+  const speak = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if ('speechSynthesis' in window) {
+      const utter = new SpeechSynthesisUtterance(word.word);
+      utter.lang = 'en-US';
+      utter.rate = 0.9;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -24,11 +35,20 @@ export function WordCard({ word, starred, known, onToggleStar, onClick, compact 
     >
       <div className="relative z-[2] mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-foreground transition-colors group-hover:text-primary"
-            style={{ fontSize: 'var(--font-size-title)' }}
-          >
-            {word.word}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-foreground transition-colors group-hover:text-primary"
+              style={{ fontSize: 'var(--font-size-title)' }}
+            >
+              {word.word}
+            </h3>
+            <button
+              onClick={speak}
+              className="shrink-0 rounded-md p-1 text-muted-foreground transition-all hover:bg-white/10 hover:text-primary active:scale-90"
+              aria-label="发音"
+            >
+              <Volume2 className="h-4 w-4" />
+            </button>
+          </div>
           {word.phonetic && (
             <p className="mt-0.5 font-mono text-sm text-muted-foreground">{word.phonetic}</p>
           )}

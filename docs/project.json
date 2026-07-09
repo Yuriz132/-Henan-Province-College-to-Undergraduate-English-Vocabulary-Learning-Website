@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "液态单词 Liquid Words",
   "app_slug": "liquid-words",
-  "version_description": "移除发音功能",
+  "version_description": "重新加回发音功能并优化翻卡布局",
   "preview_type": "pc"
 }
