@@ -1,0 +1,37 @@
+[
+  {
+    "pageKey": "Home",
+    "title": "概览",
+    "url": "/"
+  },
+  {
+    "pageKey": "Browse",
+    "title": "浏览",
+    "url": "/browse"
+  },
+  {
+    "pageKey": "BrowsePart",
+    "title": "Part 列表",
+    "url": "/browse/:part"
+  },
+  {
+    "pageKey": "BrowseList",
+    "title": "单词列表",
+    "url": "/browse/:part/:list"
+  },
+  {
+    "pageKey": "Flashcards",
+    "title": "翻卡学习",
+    "url": "/flashcards/:part/:list"
+  },
+  {
+    "pageKey": "Search",
+    "title": "搜索",
+    "url": "/search"
+  },
+  {
+    "pageKey": "Starred",
+    "title": "生词本",
+    "url": "/starred"
+  }
+]
