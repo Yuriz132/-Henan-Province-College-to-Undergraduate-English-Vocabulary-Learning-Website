@@ -49,7 +49,7 @@ export function PomodoroTimer() {
 
   const [mode, setMode] = useState<Mode>('focus');
   const [secondsLeft, setSecondsLeft] = useState(settings.focus * 60);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -67,7 +67,7 @@ export function PomodoroTimer() {
     intervalRef.current = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
-          handleComplete();
+          handleCompleteRef.current();
           return 0;
         }
         return s - 1;
@@ -84,7 +84,7 @@ export function PomodoroTimer() {
     (next: Mode) => {
       setMode(next);
       setSecondsLeft(settings[next] * 60);
-      setRunning(false);
+      setRunning(true);
     },
     [settings]
   );
@@ -109,6 +109,12 @@ export function PomodoroTimer() {
       /* ignore */
     }
   }, [mode, cycleCount, switchMode]);
+
+  // 始终调用最新版本的完成逻辑（自动计时下 interval 不重建，避免闭包过期）
+  const handleCompleteRef = useRef(handleComplete);
+  useEffect(() => {
+    handleCompleteRef.current = handleComplete;
+  }, [handleComplete]);
 
   const toggle = () => setRunning((r) => !r);
 
