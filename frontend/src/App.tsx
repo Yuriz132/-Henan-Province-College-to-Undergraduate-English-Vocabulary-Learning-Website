@@ -13,6 +13,10 @@ import Flashcards from "./pages/Flashcards";
 import SearchPage from "./pages/Search";
 import Starred from "./pages/Starred";
 import NotFound from "./pages/NotFound";
+import CustomLibrary from "./pages/CustomLibrary";
+import CustomFlashcards from "./pages/CustomFlashcards";
+import Quiz from "./pages/Quiz";
+import Confusables from "./pages/Confusables";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +46,11 @@ function App() {
               <Route path="/browse/:part" data-genie-title="Part 列表" data-genie-key="BrowsePart" element={<PageTransition transition="fade"><Browse /></PageTransition>} />
               <Route path="/browse/:part/:list" data-genie-title="单词列表" data-genie-key="BrowseList" element={<PageTransition transition="fade"><Browse /></PageTransition>} />
               <Route path="/flashcards/:part/:list" data-genie-title="翻卡学习" data-genie-key="Flashcards" element={<PageTransition transition="fade"><Flashcards /></PageTransition>} />
+              <Route path="/custom" data-genie-title="自定义词库" data-genie-key="Custom" element={<PageTransition transition="fade"><CustomLibrary /></PageTransition>} />
+              <Route path="/custom/:listId" data-genie-title="词库详情" data-genie-key="CustomList" element={<PageTransition transition="fade"><CustomLibrary /></PageTransition>} />
+              <Route path="/flashcards/custom/:listId" data-genie-title="自定义翻卡" data-genie-key="CustomFlashcards" element={<PageTransition transition="fade"><CustomFlashcards /></PageTransition>} />
+              <Route path="/quiz" data-genie-title="听音写词" data-genie-key="Quiz" element={<PageTransition transition="fade"><Quiz /></PageTransition>} />
+              <Route path="/confusables" data-genie-title="近义词辨析" data-genie-key="Confusables" element={<PageTransition transition="fade"><Confusables /></PageTransition>} />
               <Route path="/search" data-genie-title="搜索" data-genie-key="Search" element={<PageTransition transition="fade"><SearchPage /></PageTransition>} />
               <Route path="/starred" data-genie-title="生词本" data-genie-key="Starred" element={<PageTransition transition="fade"><Starred /></PageTransition>} />
               <Route path="*" data-genie-key="NotFound" data-genie-title="Not Found" element={<PageTransition transition="fade"><NotFound /></PageTransition>} />

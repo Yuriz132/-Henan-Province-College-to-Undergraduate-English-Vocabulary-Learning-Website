@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "减弱边缘折射光环",
+  "version_description": "取消全部边缘光折射",
   "preview_type": "pc"
 }

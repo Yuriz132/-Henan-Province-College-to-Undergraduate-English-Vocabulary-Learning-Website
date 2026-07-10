@@ -1,10 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Search, Star, LayoutGrid, Sparkles } from 'lucide-react';
+import { BookOpen, Search, Star, LayoutGrid, Sparkles, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/', label: '概览', icon: LayoutGrid },
   { to: '/browse', label: '浏览', icon: BookOpen },
+  { to: '/custom', label: '词库', icon: BookMarked },
+  { to: '/quiz', label: '测验', icon: AudioLines },
+  { to: '/confusables', label: '辨析', icon: GitCompareArrows },
   { to: '/search', label: '搜索', icon: Search },
   { to: '/starred', label: '生词本', icon: Star },
 ];
