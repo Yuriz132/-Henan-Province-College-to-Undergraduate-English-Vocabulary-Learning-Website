@@ -518,12 +518,14 @@
   padding: 1px;
   background: conic-gradient(
     from 180deg at 50% 50%,
-    oklch(1 0 0 / 0.18) 0deg,
-    oklch(0.65 0.18 240 / 0.12) 60deg,
-    transparent 120deg,
-    transparent 240deg,
-    oklch(0.7 0.15 340 / 0.1) 300deg,
-    oklch(1 0 0 / 0.18) 360deg
+    oklch(1 0 0 / 0.42) 0deg,
+    oklch(0.65 0.18 240 / 0.32) 55deg,
+    oklch(1 0 0 / 0.12) 110deg,
+    transparent 150deg,
+    transparent 210deg,
+    oklch(1 0 0 / 0.12) 250deg,
+    oklch(0.7 0.15 340 / 0.3) 300deg,
+    oklch(1 0 0 / 0.42) 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -538,18 +540,21 @@
   opacity: 1;
 }
 
-/* 顶部高光 + 底部折射 */
+/* 顶部高光 + 底部折射（加大加亮，使边缘折射更明显） */
 .liquid-glass::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background:
-    linear-gradient(180deg,
-      oklch(1 0 0 / 0.18) 0%,
-      transparent 8%,
-      transparent 92%,
-      oklch(0 0 0 / 0.08) 100%
+    linear-gradient(
+      180deg,
+      oklch(1 0 0 / 0.34) 0%,
+      oklch(1 0 0 / 0.12) 14%,
+      transparent 30%,
+      transparent 70%,
+      oklch(1 0 0 / 0.14) 86%,
+      oklch(0 0 0 / 0.12) 100%
     );
   pointer-events: none;
   z-index: 0;
@@ -585,6 +590,18 @@
     0 12px 40px oklch(0.65 0.18 240 / 0.3),
     0 0 24px oklch(0.65 0.18 240 / 0.2),
     inset 0 1px 1px oklch(1 0 0 / 0.5);
+}
+
+/* 强毛玻璃 — 深色高不透明，用于悬浮面板，保证文字清晰可读 */
+.liquid-glass-strong {
+  background: oklch(0.15 0.02 270 / 0.72);
+  backdrop-filter: blur(28px) saturate(1.8) contrast(1.05);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) contrast(1.05);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  box-shadow:
+    0 16px 50px oklch(0 0 0 / 0.45),
+    inset 0 1px 1px oklch(1 0 0 / 0.3),
+    inset 0 -1px 1px oklch(0 0 0 / 0.2);
 }
 
 /* 可交互玻璃按钮 — 带 active 按压效果 */
@@ -658,6 +675,19 @@ a.liquid-glass:active {
 
 .flip-card-back {
   transform: rotateY(180deg);
+}
+
+/* 果冻回弹：松手后 Q 弹回弹 */
+@keyframes card-jelly {
+  0%   { transform: perspective(800px) scale(0.95); }
+  30%  { transform: perspective(800px) scale(1.06) rotateX(2.5deg) rotateY(-3deg); }
+  55%  { transform: perspective(800px) scale(0.97); }
+  75%  { transform: perspective(800px) scale(1.02); }
+  100% { transform: perspective(800px) scale(1); }
+}
+.card-jelly {
+  animation: card-jelly 650ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
 
 /* 文字渐变 */

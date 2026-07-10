@@ -1,6 +1,7 @@
 import { Star, Volume2 } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
+import { speakWord } from '@/lib/speak';
 
 interface WordCardProps {
   word: Word;
@@ -15,13 +16,7 @@ interface WordCardProps {
 export function WordCard({ word, starred, known, onToggleStar, onClick, compact }: WordCardProps) {
   const speak = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if ('speechSynthesis' in window) {
-      const utter = new SpeechSynthesisUtterance(word.word);
-      utter.lang = 'en-US';
-      utter.rate = 0.9;
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utter);
-    }
+    speakWord(word.word);
   };
 
   return (

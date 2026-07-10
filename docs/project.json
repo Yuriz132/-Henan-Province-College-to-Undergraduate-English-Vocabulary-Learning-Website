@@ -1,8 +1,8 @@
 {
   "project_type": "web",
   "sub_project_type": "",
-  "name": "液态单词 Liquid Words",
+  "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "重新加回发音功能并优化翻卡布局",
+  "version_description": "调细光环并后台全局删除foot评论",
   "preview_type": "pc"
 }

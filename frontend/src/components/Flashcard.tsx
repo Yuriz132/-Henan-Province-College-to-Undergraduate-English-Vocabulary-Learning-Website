@@ -1,7 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2 } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2 } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
+import { speakWord } from '@/lib/speak';
+
+// 评论区按需加载，避免 CloudBase SDK 拖慢首屏
+const WordComments = lazy(() =>
+  import('@/components/WordComments').then((m) => ({ default: m.WordComments }))
+);
 
 interface FlashcardProps {
   words: Word[];
@@ -21,6 +27,13 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const [mode, setMode] = useState<CardMode>('en2cn');
   const [shuffled, setShuffled] = useState(false);
   const [order, setOrder] = useState<number[]>(() => words.map((_, i) => i));
+  const [immersive, setImmersive] = useState(false);
+  const touchStartY = useRef(0);
+  // 果冻回弹交互状态
+  const [pressed, setPressed] = useState(false);
+  const [tilt, setTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [jellying, setJellying] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // 当 words 变化时重置顺序
   useEffect(() => {
@@ -64,14 +77,64 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const toggleFlip = useCallback(() => setFlipped((f) => !f), []);
 
   const speak = useCallback(() => {
-    if (current && 'speechSynthesis' in window) {
-      const utter = new SpeechSynthesisUtterance(current.word);
-      utter.lang = 'en-US';
-      utter.rate = 0.85;
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utter);
-    }
+    if (current) speakWord(current.word);
   }, [current]);
+
+  // 进入 / 退出沉浸模式
+  // 沉浸模式与翻卡学习共用同一个「当前单词」位置：
+  //  - 进入时不重置进度，从当前单词开始；
+  //  - 退出后停留在沉浸模式最后停留的单词（例如 head），再次进入也从该单词继续。
+  const enterImmersive = useCallback(() => {
+    setFlipped(false);
+    setImmersive(true);
+  }, []);
+
+  const exitImmersive = useCallback(() => {
+    setImmersive(false);
+    // 退出后回到页面顶部，确保翻卡卡片（当前单词）进入视野
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // 手机上下滑动切换单词：上滑→下一个，下滑→上一个
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dy) > 50) {
+      if (dy < 0) next();
+      else prev();
+    }
+  };
+
+  // 沉浸模式下，进入与每次切换单词时自动朗读
+  useEffect(() => {
+    if (immersive && current) speakWord(current.word);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, immersive]);
+
+  // 果冻回弹：手指按住卡片时轻微挤压并跟随倾斜，松手后 Q 弹回弹
+  const updateTilt = (e: React.PointerEvent) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+    const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+    setTilt({ x: -dy * 8, y: dx * 8 });
+  };
+  const onCardPointerDown = (e: React.PointerEvent) => {
+    setPressed(true);
+    updateTilt(e);
+  };
+  const onCardPointerMove = (e: React.PointerEvent) => {
+    if (pressed) updateTilt(e);
+  };
+  const onCardPointerUp = () => {
+    if (!pressed) return;
+    setPressed(false);
+    setTilt({ x: 0, y: 0 });
+    setJellying(true);
+  };
 
   // 切换模式时翻回正面
   const toggleMode = useCallback(() => {
@@ -84,6 +147,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   // 键盘控制
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (immersive) {
+        // 沉浸模式下用 ↑/↓ 切换单词；退出仅允许点击「缩小」按钮
+        if (e.key === 'ArrowUp') { e.preventDefault(); next(); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); prev(); }
+        return;
+      }
       if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
       else if (e.key === ' ') {
@@ -93,7 +162,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [next, prev, toggleFlip, onClose]);
+  }, [next, prev, toggleFlip, onClose, immersive, exitImmersive]);
 
   if (!current) return null;
 
@@ -168,6 +237,63 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
     </>
   );
 
+  // 沉浸模式：极简界面，仅保留单词、音标、发音与「缩小」退出按钮。
+  // 用 fixed 铺满整屏并禁用页面滚动，确保正好一屏，上下滑动切换单词更顺滑。
+  if (immersive) {
+    return (
+      <div
+        className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-[oklch(0.15_0.03_270/0.45)] px-6 py-10 backdrop-blur-xl"
+        style={{ touchAction: 'none' }} /* 禁止页面滚动，纵向滑动完全用于切换单词 */
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* 唯一的退出方式：固定在屏幕右上角的小号缩小按钮 */}
+        <button
+          onClick={exitImmersive}
+          title="退出沉浸模式"
+          aria-label="退出沉浸模式"
+          className="fixed right-4 top-16 z-[70] flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-muted-foreground shadow-lg backdrop-blur-xl transition-all hover:text-primary active:scale-90"
+          style={{ position: 'fixed' }}
+        >
+          <Minimize2 className="h-4 w-4" />
+        </button>
+
+        {/* 提示文字 */}
+        <div className="mb-5 text-xs uppercase tracking-[0.3em] text-muted-foreground/60">
+          沉浸模式 · 上下滑动切换
+        </div>
+
+        {/* 单词 */}
+        <h2
+          className="relative z-[2] text-center font-bold text-foreground text-gradient"
+          style={{ fontSize: 'calc(var(--font-size-display) * 1.3)', lineHeight: 1.1 }}
+        >
+          {current.word}
+        </h2>
+
+        {/* 音标 */}
+        {current.phonetic && (
+          <p className="relative z-[2] mt-4 text-center font-mono text-xl text-muted-foreground">
+            {current.phonetic}
+          </p>
+        )}
+
+        {/* 发音按钮 */}
+        <button
+          onClick={() => speak()}
+          className="liquid-glass liquid-glass-shine relative z-[2] mt-10 inline-flex items-center gap-2 rounded-full px-6 py-3 text-base text-muted-foreground transition-all hover:text-primary active:scale-95"
+        >
+          <Volume2 className="h-5 w-5" /> 发音
+        </button>
+
+        {/* 操作提示 */}
+        <p className="mt-12 text-center text-xs text-muted-foreground/50">
+          上滑 → 下一个　·　下滑 → 上一个
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-100px)] flex-col items-center justify-center px-4 py-6">
       {/* 顶部信息 + 模式切换 */}
@@ -206,6 +332,14 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
               退出
             </button>
           )}
+          <button
+            onClick={enterImmersive}
+            className="liquid-glass liquid-glass-shine flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
+            title="进入沉浸模式（上下滑动切换单词）"
+          >
+            <Maximize2 className="h-4 w-4" />
+            <span className="hidden sm:inline">沉浸</span>
+          </button>
         </div>
       </div>
 
@@ -222,21 +356,35 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
 
       {/* 翻卡 */}
       <div
-        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped')}
+        ref={cardRef}
+        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped', jellying && 'card-jelly')}
+        style={{
+          transform: pressed
+            ? `perspective(800px) scale(0.95) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
+            : undefined,
+          transition: pressed ? 'transform 120ms ease-out' : undefined,
+          touchAction: 'pan-y',
+        }}
         onClick={toggleFlip}
+        onPointerDown={onCardPointerDown}
+        onPointerMove={onCardPointerMove}
+        onPointerUp={onCardPointerUp}
+        onPointerLeave={onCardPointerUp}
+        onPointerCancel={onCardPointerUp}
+        onAnimationEnd={() => setJellying(false)}
       >
         <div className="flip-card-inner">
           {/* 正面 */}
-          <div className="flip-card-face liquid-glass p-8 pb-12" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
-            {frontContent}
-            <p className="absolute bottom-4 z-[2] text-xs text-muted-foreground/60">点击翻面 (空格)</p>
+          <div className="flip-card-face liquid-glass flex flex-col p-8" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
+            <div className="flex w-full flex-1 flex-col items-center justify-center text-center">{frontContent}</div>
+            <p className="pt-4 text-center text-xs text-muted-foreground/60">点击翻面 (空格)</p>
           </div>
           {/* 背面 */}
-          <div className="flip-card-face flip-card-back liquid-glass-accent liquid-glass p-8 pb-12"
+          <div className="flip-card-face flip-card-back liquid-glass-accent liquid-glass flex flex-col p-8"
             style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
           >
-            {backContent}
-            <p className="absolute bottom-4 z-[2] text-xs text-muted-foreground/60">点击翻回</p>
+            <div className="flex w-full flex-1 flex-col items-center justify-center text-center">{backContent}</div>
+            <p className="pt-4 text-center text-xs text-muted-foreground/60">点击翻回</p>
           </div>
         </div>
       </div>
@@ -290,6 +438,11 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
+
+      {/* 评论区：翻到当前单词时可记录短语 / 近义词，所有访客共享可见 */}
+      <Suspense fallback={null}>
+        <WordComments wordId={current.id} wordText={current.word} />
+      </Suspense>
     </div>
   );
 }

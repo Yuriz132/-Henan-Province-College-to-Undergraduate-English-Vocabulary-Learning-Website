@@ -3,6 +3,27 @@ import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight } from 'lucide-r
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { lazy, Suspense } from 'react';
+
+const SiteFeedback = lazy(() =>
+  import('@/components/WordComments').then((m) => ({
+    default: function SiteFeedbackWrapper() {
+      return (
+        <m.WordComments
+          wordId={-2}
+          title="反馈与建议"
+          subtitle="遇到问题、有新想法或想鼓励作者，都可以写在这里"
+          placeholder="写下你的反馈或建议…"
+          emptyText="还没有反馈，来做第一个提建议的人吧～"
+        />
+      );
+    },
+  }))
+);
+
+const ProgressIO = lazy(() =>
+  import('@/components/ProgressIO').then((m) => ({ default: m.ProgressIO }))
+);
 
 export default function Index() {
   const { count: starredCount } = useStarred();
@@ -29,11 +50,8 @@ export default function Index() {
           <h1 className="font-bold text-gradient"
             style={{ fontSize: 'var(--font-size-display)', lineHeight: 1.1 }}
           >
-            液态单词
+            升本词汇
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-muted-foreground" style={{ fontSize: 'var(--font-size-body)' }}>
-            {allWords.length} 个英语单词 · {partStructure.length} 个 Part · 沉浸式液态玻璃学习体验
-          </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to="/browse"
@@ -106,6 +124,23 @@ export default function Index() {
           );
         })}
       </Stagger>
+      {/* 学习进度备份 */}
+      <FadeIn delay={0.12}>
+        <div className="mt-8 w-full">
+          <Suspense fallback={null}>
+            <ProgressIO />
+          </Suspense>
+        </div>
+      </FadeIn>
+
+      {/* 网站反馈与建议 */}
+      <FadeIn delay={0.15}>
+        <div className="mt-8 w-full">
+          <Suspense fallback={null}>
+            <SiteFeedback />
+          </Suspense>
+        </div>
+      </FadeIn>
     </div>
   );
 }
