@@ -294,8 +294,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* 深色基底兜底，确保即便背景层未加载也是深色 */
+  html {
+    background: oklch(0.12 0.03 270);
+  }
+  /* body 透明，让背后的流动渐变透出来，整体呈现磨砂玻璃质感 */
   body {
-    @apply bg-background text-foreground;
+    background: transparent;
+    @apply text-foreground;
   }
 }
 
@@ -404,6 +410,12 @@
 /* ================================================================
    Liquid Glass System — 液态玻璃效果
    ================================================================ */
+
+/* 全局磨砂：所有白色半透明表面统一加背景模糊，形成一致的玻璃质感 */
+[class*="bg-white/"] {
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+}
 
 /* 动态流动渐变背景 */
 .liquid-bg {

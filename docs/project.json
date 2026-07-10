@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "调细光环并后台全局删除foot评论",
+  "version_description": "清理密钥并推送代码到github",
   "preview_type": "pc"
 }

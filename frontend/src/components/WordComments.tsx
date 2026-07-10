@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MessageCircle, Send, Loader2, Trash2 } from 'lucide-react';
-import { fetchComments, addComment, deleteComment, isAnonymousReady, type Comment } from '@/lib/cloudbase';
-import { useAdmin, ADMIN_CODE } from '@/lib/admin';
-import { useHiddenComments, hideComment } from '@/lib/hidden-comments';
+import { MessageCircle, Send, Loader2 } from 'lucide-react';
+import { fetchComments, addComment, isAnonymousReady, type Comment } from '@/lib/cloudbase';
 import { cn } from '@/lib/utils';
 
 interface WordCommentsProps {
@@ -41,33 +39,6 @@ export function WordComments({
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isAdmin = useAdmin();
-  const hidden = useHiddenComments();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定删除这条评论吗？')) return;
-    setDeletingId(id);
-    setError(null);
-    // 先在管理员本机隐藏，确保立即生效
-    hideComment(id);
-    try {
-      // 尝试真正的全局删除（体验版环境通常会因权限被拦，属正常）
-      const r = await deleteComment(id, ADMIN_CODE);
-      if (r.ok) {
-        setError(null);
-      } else {
-        setError('已在你的浏览器隐藏该评论（当前环境暂不支持全局删除）');
-      }
-    } catch (e) {
-      console.error('[comments] 全局删除失败', e);
-      setError('已在你的浏览器隐藏该评论（当前环境暂不支持全局删除）');
-    } finally {
-      setDeletingId(null);
-      await load();
-    }
-  };
 
   const headerTitle = title ?? '大家的灵光一现';
   const headerSubtitle = subtitle ?? (wordText ? `关于 “${wordText}” 的短语 / 近义词 / 记忆口诀` : '');
@@ -132,9 +103,7 @@ export function WordComments({
         ) : comments.length === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground/70">{emptyMsg}</p>
         ) : (
-          comments
-            .filter((c) => !hidden.has(c._id!))
-            .map((c) => (
+          comments.map((c) => (
             <div
               key={c._id}
               className="flex items-start gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-foreground/90"
@@ -145,21 +114,6 @@ export function WordComments({
                   {c.author} · {timeAgo(c.createdAt)}
                 </p>
               </div>
-              {isAdmin && (
-                <button
-                  onClick={() => handleDelete(c._id!)}
-                  disabled={deletingId === c._id}
-                  title="删除评论"
-                  aria-label="删除评论"
-                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 transition-all hover:bg-destructive/15 hover:text-destructive active:scale-90"
-                >
-                  {deletingId === c._id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              )}
             </div>
           ))
         )}

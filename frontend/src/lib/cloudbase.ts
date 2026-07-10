@@ -68,10 +68,3 @@ export async function addComment(wordId: number, text: string): Promise<void> {
   });
 }
 
-/** 管理员删除评论：通过云函数 deleteComment（管理员权限，可删任意评论）。code 必须正确。 */
-export async function deleteComment(id: string, code: string): Promise<{ ok: boolean; error?: string }> {
-  const app = await getCloudApp();
-  const res: any = await app.callFunction({ name: 'deleteComment', data: { id, code } });
-  const result = (res && res.result) || {};
-  return { ok: !!result.ok, error: result.error };
-}
