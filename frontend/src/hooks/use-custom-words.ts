@@ -68,6 +68,17 @@ export function useCustomWords() {
     [lists, persist]
   );
 
+  const addWords = useCallback(
+    (id: string, words: CustomWord[]) => {
+      const cleaned = words.map((w) => ({ ...w, word: w.word.trim() })).filter((w) => w.word);
+      if (cleaned.length === 0) return;
+      persist(
+        lists.map((l) => (l.id === id ? { ...l, words: [...l.words, ...cleaned] } : l))
+      );
+    },
+    [lists, persist]
+  );
+
   const updateWord = useCallback(
     (id: string, index: number, word: CustomWord) => {
       persist(
@@ -98,5 +109,5 @@ export function useCustomWords() {
 
   const getList = useCallback((id?: string) => lists.find((l) => l.id === id), [lists]);
 
-  return { lists, createList, renameList, deleteList, addWord, updateWord, removeWord, getList };
+  return { lists, createList, renameList, deleteList, addWord, addWords, updateWord, removeWord, getList };
 }

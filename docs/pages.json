@@ -20,9 +20,34 @@
     "url": "/browse/:part/:list"
   },
   {
+    "pageKey": "Confusables",
+    "title": "近义词辨析",
+    "url": "/confusables"
+  },
+  {
+    "pageKey": "Custom",
+    "title": "自定义词库",
+    "url": "/custom"
+  },
+  {
+    "pageKey": "CustomList",
+    "title": "词库详情",
+    "url": "/custom/:listId"
+  },
+  {
     "pageKey": "Flashcards",
     "title": "翻卡学习",
     "url": "/flashcards/:part/:list"
+  },
+  {
+    "pageKey": "CustomFlashcards",
+    "title": "自定义翻卡",
+    "url": "/flashcards/custom/:listId"
+  },
+  {
+    "pageKey": "Quiz",
+    "title": "听音写词",
+    "url": "/quiz"
   },
   {
     "pageKey": "Search",

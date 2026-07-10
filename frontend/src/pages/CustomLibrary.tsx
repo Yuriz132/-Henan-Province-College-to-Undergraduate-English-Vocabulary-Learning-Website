@@ -1,17 +1,61 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, BookMarked, Pencil, Trash2, Play, Volume2, X, ChevronRight } from 'lucide-react';
+import { Plus, BookMarked, Pencil, Trash2, Play, Volume2, X, ChevronRight, FileText, Check } from 'lucide-react';
 import { useCustomWords } from '@/hooks/use-custom-words';
+import type { CustomWord } from '@/types/word';
 import { speakWord } from '@/lib/speak';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+
+/** 解析批量导入文本：每行一个单词
+ *  支持格式（用竖线 | 或制表符分隔，音标可省略）：
+ *    apple | /ˈæpl/ | 苹果
+ *    book | 书
+ */
+function parseBulk(text: string): { words: CustomWord[]; invalid: string[] } {
+  const words: CustomWord[] = [];
+  const invalid: string[] = [];
+  const lines = text.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    let word = '';
+    let phonetic: string | undefined;
+    let meaning = '';
+    if (line.includes('|')) {
+      const parts = line.split('|').map((s) => s.trim());
+      word = parts[0] || '';
+      if (parts.length >= 3) {
+        phonetic = parts[1] || undefined;
+        meaning = parts.slice(2).join(' | ');
+      } else if (parts.length === 2) {
+        meaning = parts[1];
+      }
+    } else if (line.includes('\t')) {
+      const parts = line.split('\t').map((s) => s.trim());
+      word = parts[0] || '';
+      meaning = parts.slice(1).join(' ');
+    } else {
+      const parts = line.split(/\s+/);
+      word = parts[0] || '';
+      meaning = parts.slice(1).join(' ');
+    }
+    if (!word) {
+      invalid.push(raw);
+      continue;
+    }
+    words.push({ word, phonetic, meaning });
+  }
+  return { words, invalid };
+}
 
 export default function CustomLibrary() {
   const { listId } = useParams();
   const navigate = useNavigate();
-  const { lists, createList, renameList, deleteList, addWord, updateWord, removeWord, getList } = useCustomWords();
+  const { lists, createList, renameList, deleteList, addWord, addWords, updateWord, removeWord, getList } = useCustomWords();
 
   const [newListName, setNewListName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const active = listId ? getList(listId) : undefined;
 
@@ -22,12 +66,11 @@ export default function CustomLibrary() {
         onBack={() => navigate('/custom')}
         onRename={(name) => renameList(active.id, name)}
         onDelete={() => {
-          if (window.confirm(`删除词库「${active.name}」？此操作不可恢复`)) {
-            deleteList(active.id);
-            navigate('/custom');
-          }
+          deleteList(active.id);
+          navigate('/custom');
         }}
         onAddWord={(w) => addWord(active.id, w)}
+        onAddWords={(ws) => addWords(active.id, ws)}
         onUpdateWord={(i, w) => updateWord(active.id, i, w)}
         onRemoveWord={(i) => removeWord(active.id, i)}
       />
@@ -99,21 +142,50 @@ export default function CustomLibrary() {
       ) : (
         <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {lists.map((l) => (
-            <button
+            <div
               key={l.id}
-              onClick={() => navigate(`/custom/${l.id}`)}
-              className="liquid-glass liquid-glass-shine group flex flex-col items-start p-5 text-left transition-all hover:-translate-y-1 active:scale-[0.98]"
+              className="liquid-glass liquid-glass-shine group flex flex-col items-start p-5 transition-all hover:-translate-y-1"
               style={{ borderRadius: 'var(--radius-lg)' }}
             >
-              <div className="mb-2 flex w-full items-center justify-between">
-                <span className="flex items-center gap-2 font-semibold text-foreground">
-                  <BookMarked className="h-4 w-4 text-primary" />
-                  {l.name}
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-              </div>
-              <div className="text-sm text-muted-foreground">{l.words.length} 个单词</div>
-            </button>
+              <button
+                onClick={() => navigate(`/custom/${l.id}`)}
+                className="flex w-full flex-col items-start text-left"
+              >
+                <div className="mb-2 flex w-full items-center justify-between">
+                  <span className="flex items-center gap-2 font-semibold text-foreground">
+                    <BookMarked className="h-4 w-4 text-primary" />
+                    {l.name}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </div>
+                <div className="text-sm text-muted-foreground">{l.words.length} 个单词</div>
+              </button>
+
+              {confirmId === l.id ? (
+                <div className="mt-3 flex w-full items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  确认删除？
+                  <button
+                    onClick={() => { deleteList(l.id); setConfirmId(null); }}
+                    className="ml-auto flex items-center gap-1 rounded-md bg-destructive px-2 py-1 text-xs text-white transition-all active:scale-95"
+                  >
+                    <Check className="h-3.5 w-3.5" /> 删除
+                  </button>
+                  <button
+                    onClick={() => setConfirmId(null)}
+                    className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-white/10 active:scale-95"
+                  >
+                    取消
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmId(l.id)}
+                  className="mt-3 flex items-center gap-1 text-xs text-muted-foreground transition-all hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> 删除
+                </button>
+              )}
+            </div>
           ))}
         </Stagger>
       )}
@@ -126,20 +198,27 @@ interface ListDetailProps {
   onBack: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
-  onAddWord: (w: { word: string; phonetic?: string; meaning: string }) => void;
-  onUpdateWord: (i: number, w: { word: string; phonetic?: string; meaning: string }) => void;
+  onAddWord: (w: CustomWord) => void;
+  onAddWords: (ws: CustomWord[]) => void;
+  onUpdateWord: (i: number, w: CustomWord) => void;
   onRemoveWord: (i: number) => void;
 }
 
-function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onUpdateWord, onRemoveWord }: ListDetailProps) {
+function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onAddWords, onUpdateWord, onRemoveWord }: ListDetailProps) {
   const [word, setWord] = useState('');
   const [phonetic, setPhonetic] = useState('');
   const [meaning, setMeaning] = useState('');
   const [editing, setEditing] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // 批量导入状态
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState('');
+  const parsed = importText.trim() ? parseBulk(importText) : { words: [], invalid: [] };
 
   const submit = () => {
     if (!word.trim()) return;
-    const w = { word: word.trim(), phonetic: phonetic.trim() || undefined, meaning: meaning.trim() };
+    const w: CustomWord = { word: word.trim(), phonetic: phonetic.trim() || undefined, meaning: meaning.trim() };
     if (editing !== null) {
       onUpdateWord(editing, w);
       setEditing(null);
@@ -149,6 +228,13 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onUpdateWord,
     setWord('');
     setPhonetic('');
     setMeaning('');
+  };
+
+  const doImport = () => {
+    if (parsed.words.length === 0) return;
+    onAddWords(parsed.words);
+    setImportText('');
+    setShowImport(false);
   };
 
   return (
@@ -177,16 +263,28 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onUpdateWord,
         >
           <Volume2 className="h-4 w-4" /> 听音写词
         </Link>
-        <button
-          onClick={onDelete}
-          className="ml-auto flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm text-destructive transition-all hover:bg-destructive/10 active:scale-95"
-        >
-          <Trash2 className="h-4 w-4" /> 删除词库
-        </button>
+        {confirmDelete ? (
+          <span className="ml-auto flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-1.5 text-sm text-destructive">
+            确认删除？
+            <button onClick={onDelete} className="flex items-center gap-1 rounded-md bg-destructive px-2 py-1 text-xs text-white transition-all active:scale-95">
+              <Check className="h-3.5 w-3.5" /> 删除
+            </button>
+            <button onClick={() => setConfirmDelete(false)} className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-white/10 active:scale-95">
+              取消
+            </button>
+          </span>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="ml-auto flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm text-destructive transition-all hover:bg-destructive/10 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4" /> 删除词库
+          </button>
+        )}
       </div>
 
       {/* 添加 / 编辑单词 */}
-      <div className="liquid-glass mb-6 rounded-2xl p-4">
+      <div className="liquid-glass mb-3 rounded-2xl p-4">
         <div className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr_auto]">
           <input
             value={word}
@@ -215,10 +313,50 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onUpdateWord,
             {editing !== null ? '保存' : '添加'}
           </button>
         </div>
+        <button
+          onClick={() => setShowImport((v) => !v)}
+          className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground transition-all hover:text-primary"
+        >
+          <FileText className="h-3.5 w-3.5" /> {showImport ? '收起批量导入' : '批量导入（一键粘贴多词）'}
+        </button>
       </div>
 
+      {/* 批量导入 */}
+      {showImport && (
+        <div className="liquid-glass mb-6 rounded-2xl p-4">
+          <p className="mb-2 text-xs text-muted-foreground">
+            每行一个单词，用 <span className="font-mono text-foreground">|</span> 分隔（音标可省略）：
+          </p>
+          <pre className="mb-3 rounded-lg bg-white/5 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+{`apple | /ˈæpl/ | 苹果
+book | 书
+teacher | /ˈtiːtʃə/ | 老师`}
+          </pre>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            rows={6}
+            placeholder={'apple | /ˈæpl/ | 苹果\nbook | 书'}
+            className="liquid-glass h-36 w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary/50"
+          />
+          {importText.trim() && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              将导入 <span className="text-primary">{parsed.words.length}</span> 个单词
+              {parsed.invalid.length > 0 && <span className="text-destructive">（{parsed.invalid.length} 行格式无法识别，已忽略）</span>}
+            </p>
+          )}
+          <button
+            onClick={doImport}
+            disabled={parsed.words.length === 0}
+            className="liquid-glass-accent liquid-glass liquid-glass-shine mt-3 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-primary transition-all active:scale-95 disabled:cursor-not-allowed disabled:text-muted-foreground/40"
+          >
+            <Check className="h-4 w-4" /> 导入 {parsed.words.length} 个单词
+          </button>
+        </div>
+      )}
+
       {list.words.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground/70">还没有单词，在上方添加吧～</p>
+        <p className="py-8 text-center text-sm text-muted-foreground/70">还没有单词，在上方添加或批量导入吧～</p>
       ) : (
         <div className="space-y-2">
           {list.words.map((w, i) => (
