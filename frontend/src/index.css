@@ -521,63 +521,11 @@
               border-color var(--duration-normal, 200ms) var(--ease-default, ease);
 }
 
-/* 边缘折射层 — 模拟玻璃边缘的光线弯曲 */
-.liquid-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 0.1px;
-  background: conic-gradient(
-    from 180deg at 50% 50%,
-    oklch(1 0 0 / 0.42) 0deg,
-    oklch(0.65 0.18 240 / 0.32) 55deg,
-    oklch(1 0 0 / 0.12) 110deg,
-    transparent 150deg,
-    transparent 210deg,
-    oklch(1 0 0 / 0.12) 250deg,
-    oklch(0.7 0.15 340 / 0.3) 300deg,
-    oklch(1 0 0 / 0.42) 360deg
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.3;
-  transition: opacity var(--duration-normal, 200ms) var(--ease-default, ease);
-}
-
-.liquid-glass:hover::before {
-  opacity: 0.5;
-}
-
-/* 顶部高光 + 底部折射（加大加亮，使边缘折射更明显） */
-.liquid-glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(
-      180deg,
-      oklch(1 0 0 / 0.34) 0%,
-      oklch(1 0 0 / 0.12) 14%,
-      transparent 30%,
-      transparent 70%,
-      oklch(1 0 0 / 0.14) 86%,
-      oklch(0 0 0 / 0.12) 100%
-    );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* 悬停效果 — 增强折射和光泽 */
+/* 悬停效果 — 仅轻微抬升亮度与阴影，不产生折射光 */
 .liquid-glass:hover {
   border-color: oklch(1 0 0 / 0.25);
   box-shadow:
     0 12px 40px oklch(0 0 0 / 0.3),
-    0 0 20px oklch(0.65 0.18 240 / 0.1),
     inset 0 1px 1px oklch(1 0 0 / 0.45),
     inset 0 -1px 1px oklch(0 0 0 / 0.15),
     inset 1px 0 1px oklch(1 0 0 / 0.15),
