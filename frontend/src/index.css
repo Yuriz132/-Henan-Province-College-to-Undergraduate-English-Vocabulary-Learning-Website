@@ -527,7 +527,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: 0.1px;
   background: conic-gradient(
     from 180deg at 50% 50%,
     oklch(1 0 0 / 0.42) 0deg,
@@ -544,12 +544,12 @@
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.6;
+  opacity: 0.3;
   transition: opacity var(--duration-normal, 200ms) var(--ease-default, ease);
 }
 
 .liquid-glass:hover::before {
-  opacity: 1;
+  opacity: 0.5;
 }
 
 /* 顶部高光 + 底部折射（加大加亮，使边缘折射更明显） */

@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "清理密钥并推送代码到github",
+  "version_description": "移除管理员模式并全UI磨砂玻璃",
   "preview_type": "pc"
 }
