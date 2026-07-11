@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Volume2, Check, X, Shuffle, RotateCcw, ChevronRight } from 'lucide-react';
+import { Volume2, Check, X, Shuffle, RotateCcw, ChevronRight, Languages } from 'lucide-react';
 import { allWords, partStructure, getWordsByList } from '@/lib/words-data';
 import { useStarred } from '@/hooks/use-storage';
 import { useWrongWords } from '@/hooks/use-wrong-words';
 import { useCustomWords } from '@/hooks/use-custom-words';
-import { speakWord } from '@/lib/speak';
+import { speakWord, speakChinese } from '@/lib/speak';
 import { cn } from '@/lib/utils';
 import { FadeIn } from '@/components/MotionPrimitives';
 
@@ -16,6 +16,7 @@ interface QuizItem {
 }
 
 type SourceType = 'builtin-all' | 'starred' | 'wrong' | 'custom' | 'builtin-list';
+type QuizMode = 'en' | 'cn';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -39,6 +40,7 @@ export default function Quiz() {
   const [customId, setCustomId] = useState<string>(idParam ?? '');
   const [part, setPart] = useState<string>('');
   const [list, setList] = useState<string>('');
+  const [mode, setMode] = useState<QuizMode>('en');
 
   const [phase, setPhase] = useState<'setup' | 'playing' | 'done'>('setup');
   const [items, setItems] = useState<QuizItem[]>([]);
@@ -84,8 +86,13 @@ export default function Quiz() {
   const current = items[index];
 
   const play = useCallback(() => {
-    if (current) speakWord(current.word);
-  }, [current]);
+    if (!current) return;
+    if (mode === 'en') {
+      speakWord(current.word);
+    } else {
+      speakChinese(current.meaning);
+    }
+  }, [current, mode]);
 
   // 每题出现自动朗读
   useEffect(() => {
@@ -129,9 +136,42 @@ export default function Quiz() {
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         <FadeIn>
           <h1 className="mb-1 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
-            听音写词
+            听写测验
           </h1>
-          <p className="mb-6 text-muted-foreground">听发音，写出单词拼写。拼错会自动进入错词本。</p>
+          <p className="mb-6 text-muted-foreground">听发音写单词，或听中文默写英文。拼错会自动进入错词本。</p>
+
+          {/* 模式选择 */}
+          <div className="liquid-glass mb-4 rounded-2xl p-5">
+            <label className="mb-2 block text-sm font-medium text-foreground">测验模式</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setMode('en')}
+                className={cn(
+                  'liquid-glass liquid-glass-shine flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all active:scale-95',
+                  mode === 'en' ? 'liquid-glass-accent text-primary' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Volume2 className="h-4 w-4" />
+                <div className="text-left">
+                  <div className="font-medium">英文听写</div>
+                  <div className="text-xs opacity-70">听英文发音，写英文单词</div>
+                </div>
+              </button>
+              <button
+                onClick={() => setMode('cn')}
+                className={cn(
+                  'liquid-glass liquid-glass-shine flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all active:scale-95',
+                  mode === 'cn' ? 'liquid-glass-accent text-primary' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Languages className="h-4 w-4" />
+                <div className="text-left">
+                  <div className="font-medium">中文默写</div>
+                  <div className="text-xs opacity-70">听中文释义，默写英文</div>
+                </div>
+              </button>
+            </div>
+          </div>
 
           <div className="liquid-glass rounded-2xl p-5">
             <label className="mb-2 block text-sm font-medium text-foreground">选择词源</label>
@@ -269,7 +309,7 @@ export default function Quiz() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
         <span className="font-mono">{index + 1} / {items.length}</span>
-        <span>正确 {correct}</span>
+        <span>{mode === 'en' ? '英文听写' : '中文默写'} · 正确 {correct}</span>
       </div>
       <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${((index + 1) / items.length) * 100}%` }} />
@@ -281,11 +321,16 @@ export default function Quiz() {
             onClick={play}
             className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-6 py-3 text-primary transition-all hover:-translate-y-0.5 active:scale-95"
           >
-            <Volume2 className="h-5 w-5" /> 播放发音
+            {mode === 'en' ? <Volume2 className="h-5 w-5" /> : <Languages className="h-5 w-5" />}
+            {mode === 'en' ? '播放发音' : '播放中文'}
           </button>
         </div>
-        {current.phonetic && (
+        {/* 英文听写模式可显示音标提示；中文默写模式不显示音标（避免泄露拼写） */}
+        {mode === 'en' && current.phonetic && (
           <p className="mt-3 text-center font-mono text-sm text-muted-foreground/60">音标：{current.phonetic}</p>
+        )}
+        {mode === 'cn' && (
+          <p className="mt-3 text-center text-sm text-muted-foreground/60">听中文释义，默写出英文单词</p>
         )}
 
         <input
@@ -294,7 +339,7 @@ export default function Quiz() {
           disabled={result !== null}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { if (result) next(); else submit(); } }}
-          placeholder="写出你听到的单词…"
+          placeholder="写出英文单词…"
           className={cn(
             'liquid-glass mt-5 h-12 w-full rounded-xl bg-white/5 px-4 text-center text-lg text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary/50',
             result === 'correct' && 'ring-1 ring-success',

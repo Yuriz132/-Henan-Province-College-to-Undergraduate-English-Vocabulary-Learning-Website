@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Search, Star, LayoutGrid, Sparkles, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
+import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -17,19 +17,9 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div className="liquid-glass mx-auto mt-3 flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6"
+      <div className="liquid-glass mx-auto mt-3 flex max-w-5xl items-center justify-center gap-1 px-4 py-2.5 sm:px-6"
         style={{ borderRadius: 'calc(var(--radius) + 8px)' }}
       >
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-foreground transition-opacity hover:opacity-80 active:scale-95"
-        >
-          <Sparkles className="h-5 w-5 text-primary" />
-          <span className="font-bold tracking-tight" style={{ fontSize: 'var(--font-size-title)' }}>
-            升
-          </span>
-        </Link>
-
         <nav className="flex items-center gap-1">
           {navItems.map((item) => {
             const active = item.to === '/'

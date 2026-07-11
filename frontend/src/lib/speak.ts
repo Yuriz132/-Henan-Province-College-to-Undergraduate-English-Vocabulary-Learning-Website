@@ -42,6 +42,10 @@ function hasEnglishVoice(): boolean {
   return voices.some((v) => /^en/i.test(v.lang));
 }
 
+function hasChineseVoice(): boolean {
+  return voices.some((v) => /^zh/i.test(v.lang));
+}
+
 /** 兜底：用有道 TTS 音频播放（国内可访问，type=2 为英文） */
 function playYoudaoAudio(text: string) {
   try {
@@ -113,4 +117,31 @@ export function speakWord(text: string) {
     console.log('[speak] 无英文语音包，使用有道音频：', text);
     playYoudaoAudio(text);
   }
+}
+
+/**
+ * 朗读中文文本。用 speechSynthesis + zh-CN 语音。
+ * 国产手机自带浏览器普遍有中文 TTS 引擎，无需音频兜底。
+ */
+export function speakChinese(text: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  loadVoices();
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'zh-CN';
+    utter.rate = 0.9;
+    utter.volume = 1;
+    utter.pitch = 1;
+    const voice = voices.find((v) => /zh[-_]CN/i.test(v.lang)) || voices.find((v) => /^zh/i.test(v.lang));
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  } catch (err) {
+    console.warn('[speak] 中文朗读失败：', err);
+  }
+}
+
+/** 是否有可用的中文语音引擎 */
+export function chineseVoiceAvailable(): boolean {
+  return hasChineseVoice();
 }
