@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "新增词库听音写词与辨析",
+  "version_description": "词库批量导入与可靠删除",
   "preview_type": "pc"
 }
