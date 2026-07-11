@@ -2,10 +2,10 @@ import wordsData from '@/assets/words.json';
 import wordsCategorized from '@/assets/words-categorized.json';
 import type { Word, PartInfo, ListInfo } from '@/types/word';
 
-/** 内置词库 + 分类认知词表，合并为统一词库 */
+/** 分类认知词表 + 内置词库，合并为统一词库（认知词排在最前） */
 export const allWords: Word[] = [
-  ...(wordsData as Word[]),
   ...(wordsCategorized as Word[]),
+  ...(wordsData as Word[]),
 ];
 
 /** 构建 Part -> List 结构 */

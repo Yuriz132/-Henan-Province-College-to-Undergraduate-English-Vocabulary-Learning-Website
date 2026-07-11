@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "词库批量导入与可靠删除",
+  "version_description": "新增基础认知词与高阶认知词分类",
   "preview_type": "pc"
 }
