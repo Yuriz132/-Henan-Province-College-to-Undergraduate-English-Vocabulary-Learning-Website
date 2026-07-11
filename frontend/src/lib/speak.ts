@@ -121,24 +121,70 @@ export function speakWord(text: string) {
 
 /**
  * 朗读中文文本。用 speechSynthesis + zh-CN 语音。
- * 国产手机自带浏览器普遍有中文 TTS 引擎，无需音频兜底。
+ * 国产手机自带浏览器普遍有中文 TTS 引擎。
+ * 带「未发声则重试」保护：部分浏览器首次调用 voices 未就绪，会延迟重试。
  */
 export function speakChinese(text: string) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  loadVoices();
-  try {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'zh-CN';
-    utter.rate = 0.9;
-    utter.volume = 1;
-    utter.pitch = 1;
-    const voice = voices.find((v) => /zh[-_]CN/i.test(v.lang)) || voices.find((v) => /^zh/i.test(v.lang));
-    if (voice) utter.voice = voice;
-    window.speechSynthesis.speak(utter);
-  } catch (err) {
-    console.warn('[speak] 中文朗读失败：', err);
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    console.warn('[speak] 浏览器不支持 speechSynthesis，无法朗读中文');
+    return;
   }
+  loadVoices();
+
+  // voices 可能还没加载完，尝试主动再取一次
+  if (voices.length === 0) {
+    voices = window.speechSynthesis.getVoices() || [];
+  }
+
+  const doSpeak = () => {
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = 0.9;
+      utter.volume = 1;
+      utter.pitch = 1;
+      const voice =
+        voices.find((v) => /zh[-_]CN/i.test(v.lang)) ||
+        voices.find((v) => /^zh/i.test(v.lang));
+      if (voice) utter.voice = voice;
+
+      let started = false;
+      utter.onstart = () => { started = true; };
+      utter.onerror = (e) => {
+        console.warn('[speak] 中文朗读出错：', e.error || e);
+      };
+
+      window.speechSynthesis.speak(utter);
+
+      // 守卫：如果 500ms 内没开始发音，可能是 voices 未就绪，重新加载并重试一次
+      window.setTimeout(() => {
+        if (!started) {
+          console.warn('[speak] 中文朗读未启动，重试一次');
+          loadVoices();
+          voices = window.speechSynthesis.getVoices() || [];
+          try {
+            window.speechSynthesis.cancel();
+            const u2 = new SpeechSynthesisUtterance(text);
+            u2.lang = 'zh-CN';
+            u2.rate = 0.9;
+            u2.volume = 1;
+            const v2 =
+              voices.find((v) => /zh[-_]CN/i.test(v.lang)) ||
+              voices.find((v) => /^zh/i.test(v.lang));
+            if (v2) u2.voice = v2;
+            window.speechSynthesis.speak(u2);
+          } catch (err) {
+            console.warn('[speak] 中文重试失败：', err);
+          }
+        }
+      }, 500);
+    } catch (err) {
+      console.warn('[speak] 中文��读异常：', err);
+    }
+  };
+
+  doSpeak();
 }
 
 /** 是否有可用的中文语音引擎 */

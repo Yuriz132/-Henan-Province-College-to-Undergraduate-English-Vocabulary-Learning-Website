@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "导航栏品牌名改为单字升",
+  "version_description": "去除导航品牌并增加中文默写模式",
   "preview_type": "pc"
 }
