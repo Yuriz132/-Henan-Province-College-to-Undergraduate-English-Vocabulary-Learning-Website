@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "升本词汇",
   "app_slug": "liquid-words",
-  "version_description": "新增基础认知词与高阶认知词分类",
+  "version_description": "认知词分类加序号并置顶显示",
   "preview_type": "pc"
 }

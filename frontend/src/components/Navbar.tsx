@@ -26,7 +26,7 @@ export function Navbar() {
         >
           <Sparkles className="h-5 w-5 text-primary" />
           <span className="font-bold tracking-tight" style={{ fontSize: 'var(--font-size-title)' }}>
-            升本词汇
+            升
           </span>
         </Link>
 
