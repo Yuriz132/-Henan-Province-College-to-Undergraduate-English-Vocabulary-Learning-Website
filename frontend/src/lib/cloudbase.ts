@@ -68,3 +68,18 @@ export async function addComment(wordId: number, text: string): Promise<void> {
   });
 }
 
+/** 调用云函数 TTS 代理，返回 base64 音频 */
+export async function callTTS(text: string, lang: 'zh' | 'en' = 'zh'): Promise<{ ok: boolean; audioBase64?: string; error?: string }> {
+  const app = await getCloudApp();
+  try {
+    const res = await app.callFunction({
+      name: 'tts',
+      data: { text, lang },
+    });
+    return res.result || { ok: false, error: 'empty result' };
+  } catch (err) {
+    console.error('[cloudbase] callFunction tts 失败：', err);
+    return { ok: false, error: String(err) };
+  }
+}
+
