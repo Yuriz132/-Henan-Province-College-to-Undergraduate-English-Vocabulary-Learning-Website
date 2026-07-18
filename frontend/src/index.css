@@ -500,6 +500,25 @@
   50% { transform: translate(10vw, -20vh) scale(1.25); }
 }
 
+/* 顶部导航栏液体玻璃（真实折射由 LiquidGlass.tsx 注入 SVG 滤镜实现）
+   此处为静态兜底样式：支持 url() 滤镜时会被 JS 覆盖 backdrop-filter；
+   不支持时（如部分 Firefox）退化为普通磨砂玻璃，仍保持透明 + 边缘高光。 */
+.lg-glass {
+  position: relative;
+  background: oklch(1 0 0 / 0.06);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  box-shadow:
+    0 8px 32px oklch(0 0 0 / 0.25),
+    inset 0 1px 1px oklch(1 0 0 / 0.4),
+    inset 0 -1px 1px oklch(0 0 0 / 0.12),
+    inset 1px 0 1px oklch(1 0 0 / 0.12),
+    inset -1px 0 1px oklch(0 0 0 / 0.12);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  transition: border-color var(--duration-normal, 200ms) var(--ease-default, ease),
+              box-shadow var(--duration-normal, 200ms) var(--ease-default, ease);
+}
+
 /* 核心液态玻璃卡片 — 带边缘折射光晕 */
 .liquid-glass {
   position: relative;
