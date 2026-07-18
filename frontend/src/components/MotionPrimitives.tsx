@@ -1,5 +1,5 @@
 import { motion, type Variants, type HTMLMotionProps, useReducedMotion } from 'framer-motion';
-import { forwardRef, useRef, useState, useLayoutEffect, type ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import React from 'react';
 
 // ── Shared easing & duration tokens ──
@@ -164,62 +164,28 @@ export const FlyIn = forwardRef<HTMLDivElement, FlyInProps>(
 );
 FlyIn.displayName = 'FlyIn';
 
-// ── ExplodeIn: HarmonyOS 开屏飞入（从中心聚拢） ──
+// ── ExplodeIn: HarmonyOS 开屏飞入（固定动画，无布局测量，稳定可靠） ──
 interface ExplodeInProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   children: ReactNode;
   delay?: number;
   className?: string;
-  /** 聚拢系数 0~1，越大越靠近中心。默认 0.4 */
-  converge?: number;
-  /** 初始缩放比例，默认 0.35 */
+  /** 初始缩放比例，默认 0.5 */
   initialScale?: number;
 }
 
 export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
-  ({ children, delay = 0, className, converge = 0.4, initialScale = 0.35, ...props }, ref) => {
-    const innerRef = useRef<HTMLDivElement>(null);
-    const [offset, setOffset] = useState({ x: 0, y: 0 });
-    const [ready, setReady] = useState(false);
+  ({ children, delay = 0, className, initialScale = 0.5, ...props }, ref) => {
     const prefersReduced = useReducedMotion();
 
-    // 合并外部 ref 和内部 ref
-    const setRefs = (node: HTMLDivElement | null) => {
-      (innerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      if (typeof ref === 'function') ref(node);
-      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-    };
-
-    // 测量元素到视口中心的偏移
-    useLayoutEffect(() => {
-      if (prefersReduced || !innerRef.current) {
-        setReady(true);
-        return;
-      }
-      const rect = innerRef.current.getBoundingClientRect();
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      // 元素中心 → 视口中心的向量 × 聚拢系数
-      setOffset({
-        x: (rect.left + rect.width / 2 - cx) * converge,
-        y: (rect.top + rect.height / 2 - cy) * converge,
-      });
-      // 下一帧标记 ready 以触发动画
-      requestAnimationFrame(() => setReady(true));
-    }, [prefersReduced, converge]);
-
-    if (prefersReduced || !ready) {
-      return (
-        <div ref={setRefs} className={className} {...(props as Record<string, unknown>)}>
-          {children}
-        </div>
-      );
+    if (prefersReduced) {
+      return <div ref={ref} className={className} {...(props as Record<string, unknown>)}>{children}</div>;
     }
 
     return (
       <motion.div
-        ref={setRefs}
-        initial={{ opacity: 0, scale: initialScale, x: offset.x, y: offset.y }}
-        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+        ref={ref}
+        initial={{ opacity: 0, scale: initialScale, y: 36 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ ...explodeSpring, delay: delay || undefined }}
         className={className}
         {...props}

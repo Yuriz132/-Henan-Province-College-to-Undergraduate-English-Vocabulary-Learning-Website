@@ -43,7 +43,7 @@ export default function Index() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       {/* Hero — 开屏从中心聚拢飞入 */}
-      <ExplodeIn converge={0.3} initialScale={0.4}>
+      <ExplodeIn initialScale={0.4}>
         <div className="liquid-glass card-bounce mb-8 overflow-hidden p-8 text-center sm:p-12"
           style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
