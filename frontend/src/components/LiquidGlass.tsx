@@ -1,9 +1,10 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode, type HTMLAttributes } from 'react';
 
 // 纯液态玻璃（Liquid Glass）— 透明 + 真实折射，无磨砂模糊
-// 思路（移植自 Shu Ding 的 liquid-glass）：用 canvas 依据圆角矩形 SDF 生成位移贴图，
-// 喂给 SVG <feDisplacementMap>，让元素的 backdrop-filter 对「背后内容」做真实折射。
-// 不使用 blur()，保持通透；折射集中在圆角处，呈透镜感。
+// 移植自 Shu Ding 的 liquid-glass（https://github.com/shuding/liquid-glass）。
+// 关键：用 canvas 依据「内缩后的圆角矩形 SDF」生成位移贴图(R=dx, G=dy)，
+// 喂给 SVG <feDisplacementMap>，让 backdrop-filter 对背后内容做真实折射。
+// 折射集中在圆角/边缘处，呈透镜感。
 // 目标环境：Chrome / Android / 微信(X5)，无需兼容 iOS(Safari 不支持 backdrop-filter:url())。
 
 function smoothStep(a: number, b: number, t: number) {
@@ -15,7 +16,7 @@ function length(x: number, y: number) {
   return Math.sqrt(x * x + y * y);
 }
 
-// 有符号距离场：点 (x,y) 到圆角矩形的距离（内部为负，外部为正）
+// 有符号距离场：点 (x,y) 到圆角矩形的距离（内部为负，外部为正），单位与传入一致(px)
 function roundedRectSDF(x: number, y: number, width: number, height: number, radius: number) {
   const qx = Math.abs(x) - width + radius;
   const qy = Math.abs(y) - height + radius;
@@ -64,6 +65,8 @@ export function LiquidGlass({
     filter.setAttribute('id', id);
     filter.setAttribute('filterUnits', 'userSpaceOnUse');
     filter.setAttribute('colorInterpolationFilters', 'sRGB');
+    filter.setAttribute('x', '0');
+    filter.setAttribute('y', '0');
 
     const feImage = document.createElementNS(svgns, 'feImage');
     feImage.setAttribute('id', id + '_map');
@@ -106,28 +109,31 @@ export function LiquidGlass({
       filter.setAttribute('width', String(w));
       filter.setAttribute('height', String(h));
 
-      // 圆角：优先用元素实际渲染值，保证折射透镜与圆角对齐
-      let rPx = radius;
-      if (rPx == null) {
-        const parsed = parseFloat(getComputedStyle(el).borderTopLeftRadius);
-        rPx = isNaN(parsed) ? 0 : parsed;
-      }
-      const rNorm = Math.min(0.5, (rPx || 0) / h);
+      // 关键修复（之前看不到折射的真正原因）：
+      // 1) SDF 形状必须「内缩」一个 margin，否则元素像素的 SDF 距离 d 都 ≤ ~0.15，
+      //    smoothStep(0.8,0,d-0.15) 饱和到 1 → scaled=1 → dx/dy 恒为 0 → 无折射。
+      // 2) 形状用「全圆角 stadium」(半径=min 半宽高)，让边缘落入折射带 d∈(0.15,0.8)
+      //    且折射带足够厚，位移量才明显可见（参考 shuding 官方 demo 的参数关系）。
+      const margin = Math.min(w, h) * 0.22;
+      const halfW = w / 2 - margin;
+      const halfH = h / 2 - margin;
+      const stadium = Math.min(halfW, halfH);
+      const rShape = radius != null ? Math.min(stadium, radius) : stadium;
 
       const data = new Uint8ClampedArray(w * h * 4);
       let maxScale = 0;
       const raw: number[] = [];
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
-          const ix = x / w - 0.5;
-          const iy = y / h - 0.5;
-          const d = roundedRectSDF(ix, iy, 0.5, 0.5, rNorm);
-          const displacement = smoothStep(0.8, 0, d - 0.15);
+          const px = x - w / 2;
+          const py = y - h / 2;
+          // SDF 距离（px），再归一化到 min(w,h) 以保持与 smoothStep 阈值尺度一致
+          const d = roundedRectSDF(px, py, halfW, halfH, rShape);
+          const dn = d / Math.min(w, h);
+          const displacement = smoothStep(0.8, 0, dn - 0.15);
           const scaled = smoothStep(0, 1, displacement);
-          const tx = ix * scaled + 0.5;
-          const ty = iy * scaled + 0.5;
-          const dx = tx * w - x;
-          const dy = ty * h - y;
+          const dx = px * (scaled - 1);
+          const dy = py * (scaled - 1);
           maxScale = Math.max(maxScale, Math.abs(dx), Math.abs(dy));
           raw.push(dx, dy);
         }
