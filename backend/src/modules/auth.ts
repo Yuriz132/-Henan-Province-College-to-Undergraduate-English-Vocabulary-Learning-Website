@@ -6,11 +6,13 @@ import { z } from 'zod'
 
 // ============================================
 // 账户 + 云端学习进度模块
-// 存储：backend/data/users.json（JSON 文件，零外部依赖）
+// 存储：backend/data/users.json（JSON 文件，零外部依赖；位于 dist 之外，重建不会丢失）
 // 密码：scrypt 加盐哈希，绝不存明文
 // ============================================
 
-const DATA_DIR = path.resolve(__dirname, '..', 'data')
+// __dirname 在编译后为 dist/modules，开发期为 src/modules，向上两级均到达 backend 根目录，
+// 因此数据目录稳定落在 backend/data，不受 tsc 重新生成 dist 的影响。
+const DATA_DIR = path.resolve(__dirname, '..', '..', 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
 
 // ---------- 类型 ----------
