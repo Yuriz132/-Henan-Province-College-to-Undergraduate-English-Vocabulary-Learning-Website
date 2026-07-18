@@ -19,6 +19,7 @@ import CustomFlashcards from "./pages/CustomFlashcards";
 import Quiz from "./pages/Quiz";
 import Confusables from "./pages/Confusables";
 import Login from "./pages/Login";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +58,7 @@ function App() {
               <Route path="/search" data-genie-title="搜索" data-genie-key="Search" element={<PageTransition transition="fadethrough"><SearchPage /></PageTransition>} />
               <Route path="/starred" data-genie-title="生词本" data-genie-key="Starred" element={<PageTransition transition="fadethrough"><Starred /></PageTransition>} />
               <Route path="/login" data-genie-title="登录" data-genie-key="Login" element={<PageTransition transition="fadethrough"><Login /></PageTransition>} />
+              <Route path="/account" data-genie-title="账号管理" element={<PageTransition transition="fadethrough"><Account /></PageTransition>} />
               <Route path="*" data-genie-key="NotFound" data-genie-title="Not Found" element={<PageTransition transition="fadethrough"><NotFound /></PageTransition>} />
             </AnimatedRoutes>
             <PomodoroTimer />

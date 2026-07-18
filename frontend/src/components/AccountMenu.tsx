@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, UploadCloud, Check } from 'lucide-react'
+import { User, LogOut, UploadCloud, Check, Settings } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
 export function AccountMenu() {
@@ -72,6 +72,17 @@ export function AccountMenu() {
               {msg}
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              navigate('/account')
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-white/5"
+          >
+            <Settings className="h-4 w-4" />
+            账号管理
+          </button>
           <button
             type="button"
             onClick={() => {

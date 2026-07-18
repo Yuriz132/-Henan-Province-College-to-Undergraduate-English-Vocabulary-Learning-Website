@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Send, Loader2 } from 'lucide-react';
-import { fetchComments, addComment, type Comment } from '@/lib/comments';
+import { Trash2, MessageCircle, Send, Loader2 } from 'lucide-react';
+import { fetchComments, addComment, deleteComment, type Comment } from '@/lib/comments';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +41,7 @@ export function WordComments({
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthed } = useAuth();
+  const { isAuthed, isAdmin } = useAuth();
 
   const headerTitle = title ?? '大家的灵光一现';
   const headerSubtitle = subtitle ?? (wordText ? `关于 “${wordText}” 的短语 / 近义词 / 记忆口诀` : '');
@@ -83,6 +83,16 @@ export function WordComments({
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('确认删除这条评论吗？')) return;
+    try {
+      await deleteComment(id);
+      setComments((prev) => prev.filter((c) => c._id !== id));
+    } catch {
+      alert('删除失败，请确认你有管理员权限');
+    }
+  };
+
   return (
     <div className="liquid-glass liquid-glass-strong mt-6 w-full max-w-2xl rounded-2xl p-5">
       <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
@@ -113,6 +123,15 @@ export function WordComments({
                   {c.author} · {timeAgo(c.createdAt)}
                 </p>
               </div>
+              {isAdmin && (
+                <button
+                  onClick={() => handleDelete(c._id)}
+                  className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-destructive"
+                  title="删除评论（管理员）"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           ))
         )}

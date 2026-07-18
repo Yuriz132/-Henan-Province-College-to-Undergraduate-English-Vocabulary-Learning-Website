@@ -85,6 +85,7 @@ function localSnapshot(): CloudProgress {
 interface AuthContextValue {
   user: string | null
   isAuthed: boolean
+  isAdmin: boolean
   login: (username: string, password: string) => Promise<void>
   register: (username: string, password: string) => Promise<void>
   logout: () => void
@@ -94,8 +95,11 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+const ADMIN_KEY = 'auth_admin'
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<string | null>(() => localStorage.getItem(USER_KEY))
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem(ADMIN_KEY) === '1')
 
   // 已登录则注册云端上传器（各进度 hook 改动时自动同步）
   useEffect(() => {
@@ -112,6 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, res.token)
     localStorage.setItem(USER_KEY, res.username)
     setUser(res.username)
+    const admin = res.role === 'admin'
+    localStorage.setItem(ADMIN_KEY, admin ? '1' : '0')
+    setIsAdmin(admin)
     setCloudUploader(async (slice) => {
       await apiSaveProgress(slice)
     })
@@ -130,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, res.token)
     localStorage.setItem(USER_KEY, res.username)
     setUser(res.username)
+    const admin = res.role === 'admin'
+    localStorage.setItem(ADMIN_KEY, admin ? '1' : '0')
+    setIsAdmin(admin)
     setCloudUploader(async (slice) => {
       await apiSaveProgress(slice)
     })
@@ -145,8 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(ADMIN_KEY)
     setCloudUploader(null)
     setUser(null)
+    setIsAdmin(false)
   }
 
   const importLocalToCloud = async () => {
@@ -154,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthed: !!user, login, register, logout, importLocalToCloud }}>
+    <AuthContext.Provider value={{ user, isAuthed: !!user, isAdmin, login, register, logout, importLocalToCloud }}>
       {children}
     </AuthContext.Provider>
   )

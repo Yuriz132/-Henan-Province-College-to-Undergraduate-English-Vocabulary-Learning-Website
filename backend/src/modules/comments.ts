@@ -3,7 +3,7 @@ import { randomBytes } from 'crypto'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { z } from 'zod'
-import { authMiddleware } from './auth'
+import { authMiddleware, adminMiddleware } from './auth'
 
 // ============================================
 // 评论模块（仅登录用户可发表；读取公开）
@@ -81,4 +81,17 @@ commentsRouter.post('/comments', authMiddleware, async (req: Request, res: Respo
   all.push(comment)
   await saveComments(all)
   return res.status(201).json(comment)
+})
+
+// 删除评论（仅管理员）
+commentsRouter.delete('/comments/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  const id = req.params.id
+  const all = await loadComments()
+  const idx = all.findIndex((c) => c._id === id)
+  if (idx < 0) {
+    return res.status(404).json({ message: '评论不存在' })
+  }
+  all.splice(idx, 1)
+  await saveComments(all)
+  return res.json({ message: '已删除' })
 })

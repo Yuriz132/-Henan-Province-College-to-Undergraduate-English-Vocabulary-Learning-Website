@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight, MessageSquare, Target, Users, Flame, BarChart3 } from 'lucide-react';
-import { allWords, partStructure, getListKey } from '@/lib/words-data';
+import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Flame, BarChart3 } from 'lucide-react';
+import { allWords } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
@@ -147,51 +147,6 @@ export default function Index() {
         open={chartOpen}
         onOpenChange={setChartOpen}
       />
-
-      {/* Part 导航标题 */}
-      <FlyIn delay={0.05}>
-        <h2 className="mb-4 font-semibold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
-          单词分组
-        </h2>
-      </FlyIn>
-
-      {/* Part 导航卡片 — flyIn 增强飞入（手动包裹避免 Stagger childVariant 破坏 Link 布局） */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {partStructure.map((part, idx) => {
-          const partReviewed = part.lists.reduce((sum, l) => {
-            const p = progress[getListKey(part.name, l.name)];
-            return sum + (p?.reviewed ?? 0);
-          }, 0);
-          const pct = part.total > 0 ? Math.round((partReviewed / part.total) * 100) : 0;
-          return (
-            <FlyIn key={part.name} delay={idx * 0.06}>
-              <Link
-                to={`/browse/${encodeURIComponent(part.name)}`}
-                className="liquid-glass liquid-glass-shine card-bounce group block p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
-                style={{ borderRadius: 'var(--radius-lg)' }}
-              >
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">{part.name}</h3>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-              </div>
-              <div className="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
-                <span>{part.lists.length} 个 List</span>
-                <span>·</span>
-                <span>{part.total} 词</span>
-              </div>
-              {/* 进度条 */}
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${pct}%`, transitionDuration: 'var(--duration-slow)' }}
-                />
-              </div>
-              <div className="mt-1.5 text-xs text-muted-foreground">{pct}% 已学习</div>
-              </Link>
-            </FlyIn>
-          );
-        })}
-      </div>
 
       {/* 学习计划 */}
       <FlyIn delay={0.08}>

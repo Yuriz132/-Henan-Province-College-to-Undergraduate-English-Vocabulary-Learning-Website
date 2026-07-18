@@ -40,6 +40,7 @@ interface User {
   salt: string
   passwordHash: string
   token: string | null
+  role?: 'admin'
   progress: ProgressData
 }
 
@@ -85,8 +86,8 @@ function generateToken(): string {
   return randomBytes(32).toString('hex')
 }
 
-function publicUser(u: User): { username: string; token: string } {
-  return { username: u.username, token: u.token as string }
+function publicUser(u: User): { username: string; token: string; role?: string } {
+  return { username: u.username, token: u.token as string, role: u.role }
 }
 
 // ---------- 鉴权中间件 ----------
@@ -110,6 +111,16 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     .catch(() => {
       res.status(500).json({ message: '服务器内部错误' })
     })
+}
+
+/** 管理员鉴权：必须在 authMiddleware 之后使用 */
+export function adminMiddleware(req: Request, res: Response, next: NextFunction) {
+  const user = (req as AuthedRequest).user
+  if (!user || user.role !== 'admin') {
+    res.status(403).json({ message: '需要管理员权限' })
+    return
+  }
+  next()
 }
 
 // ---------- 校验 schema ----------
@@ -198,6 +209,38 @@ authRouter.post('/auth/login', async (req: Request, res: Response) => {
   user.token = generateToken()
   await saveUsers(users)
   return res.json(publicUser(user))
+})
+
+// 获取当前登录用户信息（用户名+角色）
+authRouter.get('/auth/me', authMiddleware, async (req: Request, res: Response) => {
+  const user = (req as AuthedRequest).user as User
+  return res.json({ username: user.username, role: user.role })
+})
+
+// 修改密码（需登录，验证旧密码）
+const passwordChangeSchema = z.object({
+  oldPassword: z.string().min(1, '请输入旧密码'),
+  newPassword: z.string().min(6, '新密码至少 6 位').max(64, '密码过长'),
+})
+authRouter.put('/auth/password', authMiddleware, async (req: Request, res: Response) => {
+  const parsed = passwordChangeSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.issues[0]?.message ?? '参数错误' })
+  }
+  const { oldPassword, newPassword } = parsed.data
+  const user = (req as AuthedRequest).user as User
+  if (!verifyPassword(oldPassword, user.salt, user.passwordHash)) {
+    return res.status(401).json({ message: '旧密码错误' })
+  }
+  const { salt, passwordHash } = hashPassword(newPassword)
+  user.salt = salt
+  user.passwordHash = passwordHash
+  user.token = generateToken() // 修改密码后 token 轮换，其他设备自动下线
+  const users = await loadUsers()
+  const idx = users.findIndex((u) => u.username === user.username)
+  if (idx >= 0) users[idx] = user
+  await saveUsers(users)
+  return res.json({ message: '密码修改成功', token: user.token })
 })
 
 // 获取云端进度

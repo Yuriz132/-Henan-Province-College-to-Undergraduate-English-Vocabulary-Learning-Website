@@ -19,3 +19,8 @@ export async function addComment(wordId: number, text: string): Promise<Comment>
   const { data } = await apiClient.post<Comment>('/comments', { wordId, text });
   return data;
 }
+
+/** 删除一条评论（仅管理员） */
+export async function deleteComment(commentId: string): Promise<void> {
+  await apiClient.delete(`/comments/${commentId}`);
+}
