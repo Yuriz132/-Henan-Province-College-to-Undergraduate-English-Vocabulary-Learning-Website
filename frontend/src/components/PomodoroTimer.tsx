@@ -151,13 +151,11 @@ export function PomodoroTimer() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
-      {/* 展开面板：外壳折射玻璃 + 内部毛玻璃文字层（兄弟并列，避免嵌套 backdrop-filter 失效） */}
+      {/* 展开面板 */}
       {expanded && (
-        <div className="relative mb-3 w-72">
-          {/* 折射玻璃外壳：仅边框/底色，纯液态玻璃折射（无模糊） */}
-          <LiquidGlass as="div" className="liquid-glass absolute inset-0" style={{ borderRadius: 'calc(var(--radius) + 8px)' }} />
-          {/* 文字内容区：独立毛玻璃模糊层（与外壳为兄弟非子级，可真实模糊） */}
-          <div className="pomo-frost relative p-4">
+        <LiquidGlass as="div" className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
+          {/* 文字内容区局部毛玻璃模糊层：文字更朦胧，外缘玻璃壳仍是液态玻璃折射 */}
+          <div className="pomo-frost">
           {!showSettings ? (
             <>
               {/* 模式切换 */}
@@ -284,7 +282,7 @@ export function PomodoroTimer() {
             </>
           )}
           </div>
-        </div>
+        </LiquidGlass>
       )}
 
       {/* 悬浮触发按钮 */}
