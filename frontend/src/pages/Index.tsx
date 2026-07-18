@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight } from 'lucide-react';
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
-import { FlyIn, ExplodeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
 import { lazy, Suspense } from 'react';
 
 const SiteFeedback = lazy(() =>
@@ -69,19 +69,21 @@ export default function Index() {
         </div>
       </ExplodeIn>
 
-      {/* 统计 — flyIn 增强飞入 */}
-      <Stagger className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4" stagger={0.08} childVariant="flyIn">
-        {stats.map((s) => {
+      {/* 统计 — flyIn 增强飞入（手动包裹） */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((s, idx) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="liquid-glass card-bounce p-4" style={{ borderRadius: 'var(--radius-lg)' }}>
-              <Icon className={`mb-2 h-5 w-5 ${s.color}`} />
-              <div className="text-2xl font-bold text-foreground">{s.value}</div>
-              <div className="text-xs text-muted-foreground">{s.label}</div>
-            </div>
+            <FlyIn key={s.label} delay={idx * 0.06}>
+              <div className="liquid-glass card-bounce p-4" style={{ borderRadius: 'var(--radius-lg)' }}>
+                <Icon className={`mb-2 h-5 w-5 ${s.color}`} />
+                <div className="text-2xl font-bold text-foreground">{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </div>
+            </FlyIn>
           );
         })}
-      </Stagger>
+      </div>
 
       {/* Part 导航标题 */}
       <FlyIn delay={0.05}>
@@ -90,21 +92,21 @@ export default function Index() {
         </h2>
       </FlyIn>
 
-      {/* Part 导航卡片 — flyIn 增强飞入 */}
-      <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.07} childVariant="flyIn">
-        {partStructure.map((part) => {
+      {/* Part 导航卡片 — flyIn 增强飞入（手动包裹避免 Stagger childVariant 破坏 Link 布局） */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {partStructure.map((part, idx) => {
           const partReviewed = part.lists.reduce((sum, l) => {
             const p = progress[getListKey(part.name, l.name)];
             return sum + (p?.reviewed ?? 0);
           }, 0);
           const pct = part.total > 0 ? Math.round((partReviewed / part.total) * 100) : 0;
           return (
-            <Link
-              key={part.name}
-              to={`/browse/${encodeURIComponent(part.name)}`}
-              className="liquid-glass liquid-glass-shine card-bounce group p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
-              style={{ borderRadius: 'var(--radius-lg)' }}
-            >
+            <FlyIn key={part.name} delay={idx * 0.06}>
+              <Link
+                to={`/browse/${encodeURIComponent(part.name)}`}
+                className="liquid-glass liquid-glass-shine card-bounce group block p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
+                style={{ borderRadius: 'var(--radius-lg)' }}
+              >
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="font-semibold text-foreground">{part.name}</h3>
                 <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
@@ -122,10 +124,11 @@ export default function Index() {
                 />
               </div>
               <div className="mt-1.5 text-xs text-muted-foreground">{pct}% 已学习</div>
-            </Link>
+              </Link>
+            </FlyIn>
           );
         })}
-      </Stagger>
+      </div>
 
       {/* 学习进度备份 */}
       <FlyIn delay={0.1}>

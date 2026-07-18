@@ -109,13 +109,13 @@ export function LiquidGlass({
       filter.setAttribute('width', String(w));
       filter.setAttribute('height', String(h));
 
-      // 关键修复（之前看不到折射的真正原因）+ 增强：
-      // 1) SDF 形状必须「内缩」一个 margin，否则元素像素的 SDF 距离 d 都 ≤ ~0.15，
-      //    smoothStep 饱和到 1 → scaled=1 → dx/dy 恒为 0 → 无折射。
-      // 2) 形状用「全圆角 stadium」(半径=min 半宽高)，让边缘落入折射带且带足够厚。
-      // 3) 增强：折射带调深(bandA 0.65) + 内缩加大(0.25)，并给垂直方向 yBoost 倍乘，
-      //    使上下（顶/底直边）扭曲明显加强（顶栏很扁，垂直原本几乎为 0）。
-      const margin = Math.min(w, h) * 0.25;
+      // 关键参数调优（第 8 轮修正）：
+      // 1) margin 从 0.25 缩减到 0.12：SDF 形状仅微缩于元素，
+      //    使元素边缘（文字刚进入处）就落入折射带，而非要进入 2/3 才有折射。
+      // 2) 形状用「全圆角 stadium」(半径=min 半宽高)，边缘透镜感强。
+      // 3) smoothStep 阈值收紧：dn > 0.04 即开始折射（之前 0.1），带更宽。
+      // 4) yBoost 垂直增强保留（顶栏很扁）。
+      const margin = Math.min(w, h) * 0.12;
       const halfW = w / 2 - margin;
       const halfH = h / 2 - margin;
       const stadium = Math.min(halfW, halfH);
@@ -132,7 +132,7 @@ export function LiquidGlass({
           // SDF 距离（px），再归一化到 min(w,h) 以保持与 smoothStep 阈值尺度一致
           const d = roundedRectSDF(px, py, halfW, halfH, rShape);
           const dn = d / Math.min(w, h);
-          const displacement = smoothStep(0.65, 0, dn - 0.1);
+          const displacement = smoothStep(0.72, 0, dn - 0.04);
           const scaled = smoothStep(0, 1, displacement);
           const dx = px * (scaled - 1);
           const dy = py * (scaled - 1) * yBoost;
