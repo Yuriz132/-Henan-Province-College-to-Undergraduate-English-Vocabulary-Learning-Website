@@ -53,7 +53,7 @@ export default function SearchPage() {
         </div>
       )}
       {results.length > 0 ? (
-        <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.05} childVariant="flyIn">
+        <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.05}>
           {results.map((w) => (
             <WordCard key={w.id} word={w} starred={isStarred(w.id)} onToggleStar={toggleStar} />
           ))}

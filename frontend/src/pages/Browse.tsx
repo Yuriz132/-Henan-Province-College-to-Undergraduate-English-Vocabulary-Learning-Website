@@ -45,7 +45,7 @@ export default function Browse() {
           </h1>
           <p className="mb-6 text-muted-foreground">{part.lists.length} 个 List · {part.total} 个单词</p>
         </FlyIn>
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07} childVariant="flyIn">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07}>
           {part.lists.map((list) => {
             const listKey = getListKey(part.name, list.name);
             const prog = getListProgress(listKey);
@@ -101,7 +101,7 @@ export default function Browse() {
             </Link>
           </div>
         </FlyIn>
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} childVariant="flyIn">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
           {currentWords.map((w) => (
             <WordCard
               key={w.id}
@@ -124,7 +124,7 @@ export default function Browse() {
         </h1>
         <p className="mb-6 text-muted-foreground">选择一个 Part 开始学习</p>
       </FlyIn>
-      <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.08} childVariant="flyIn">
+      <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.08}>
         {partStructure.map((part) => (
           <Link
             key={part.name}

@@ -67,7 +67,7 @@ export default function Starred() {
           </div>
         </FadeIn>
       ) : (
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} childVariant="flyIn">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
           {words.map((w) => (
             <WordCard key={w.id} word={w} starred onToggleStar={remove} />
           ))}

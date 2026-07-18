@@ -1,6 +1,5 @@
 import { motion, type Variants, type HTMLMotionProps, useReducedMotion } from 'framer-motion';
 import { forwardRef, type ReactNode } from 'react';
-import React from 'react';
 
 // ── Shared easing & duration tokens ──
 const ease = [0.25, 0.46, 0.45, 0.94] as const;
@@ -205,50 +204,22 @@ interface StaggerProps extends HTMLMotionProps<'div'> {
   className?: string;
   once?: boolean;
   amount?: number;
-  /**
-   * 子项默认使用的动画变体。
-   * 设为 'flyIn' 则子项自动获得缩放+模糊+弹性的飞入效果。
-   * 不传则子项需自行声明 variants（向后兼容）。
-   */
-  childVariant?: 'flyIn' | 'fadeUp';
 }
 
 export const Stagger = forwardRef<HTMLDivElement, StaggerProps>(
-  ({ children, stagger = 0.08, delay = 0, className, once = true, amount = 0.12, childVariant, ...props }, ref) => {
-    const prefersReduced = useReducedMotion();
-
-    // 根据childVariant选择子项默认variants
-    const childVariants = childVariant === 'flyIn' ? flyIn : fadeUp;
-
-    return (
-      <motion.div
-        ref={ref}
-        variants={staggerContainer(stagger, delay)}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once, amount }}
-        className={className}
-        {...props}
-      >
-        {/* 为每个没有自带 variants 的直接子元素包裹 motion */}
-        {prefersReduced ? (
-          children
-        ) : (
-          <>
-            {React.Children.map(children, (child, i) => {
-              if (!React.isValidElement(child)) return child;
-              // 每个子元素都用 motion.div 包裹以获得 flyIn/fadeUp 动画
-              return (
-                <motion.div key={i} variants={childVariants}>
-                  {child}
-                </motion.div>
-              );
-            })}
-          </>
-        )}
-      </motion.div>
-    );
-  },
+  ({ children, stagger = 0.08, delay = 0, className, once = true, amount = 0.12, ...props }, ref) => (
+    <motion.div
+      ref={ref}
+      variants={staggerContainer(stagger, delay)}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once, amount }}
+      className={className}
+      {...props}
+    >
+      {children}
+    </motion.div>
+  ),
 );
 Stagger.displayName = 'Stagger';
 

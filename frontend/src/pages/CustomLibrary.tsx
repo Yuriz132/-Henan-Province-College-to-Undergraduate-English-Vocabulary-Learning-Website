@@ -140,7 +140,7 @@ export default function CustomLibrary() {
           还没有词库，点击右上角「新建词库」开始添加你自己的单词吧～
         </p>
       ) : (
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07} childVariant="flyIn">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07}>
           {lists.map((l) => (
             <div
               key={l.id}
