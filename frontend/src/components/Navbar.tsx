@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,37 @@ export function Navbar() {
   const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
   const hideTimer = useRef<number | null>(null);
+
+  // 滑动高亮指示层的位置/尺寸
+  const navRef = useRef<HTMLElement>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, ready: false });
+
+  // 根据当前路由计算高亮层坐标（相对 nav 容器）
+  const calcIndicator = () => {
+    const idx = navItems.findIndex((item) =>
+      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)
+    );
+    const el = idx >= 0 ? linkRefs.current[idx] : null;
+    if (el && navRef.current) {
+      const navRect = navRef.current.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      setIndicator({ left: elRect.left - navRect.left, width: elRect.width, ready: true });
+    }
+  };
+
+  // 路由变化时平滑移动高亮层
+  useLayoutEffect(() => {
+    calcIndicator();
+  }, [location.pathname]);
+
+  // 尺寸变化（响应式显示文字等）重新对齐
+  useEffect(() => {
+    const onResize = () => calcIndicator();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // 不滑动 / 不操作超过 2s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
   useEffect(() => {
@@ -74,8 +105,16 @@ export function Navbar() {
         )}
         style={{ borderRadius: 'calc(var(--radius) + 8px)' }}
       >
-        <nav className="flex items-center gap-1">
-          {navItems.map((item) => {
+        <nav ref={navRef} className="relative flex items-center gap-1">
+          {/* 滑动高亮指示层：选中项之间平移移动（视觉上的"滑过去"） */}
+          {indicator.ready && (
+            <span
+              aria-hidden="true"
+              className="nav-indicator"
+              style={{ transform: `translateX(${indicator.left}px)`, width: `${indicator.width}px` }}
+            />
+          )}
+          {navItems.map((item, i) => {
             const active = item.to === '/'
               ? location.pathname === '/'
               : location.pathname.startsWith(item.to);
@@ -83,13 +122,14 @@ export function Navbar() {
             return (
               <Link
                 key={item.to}
+                ref={(el) => { linkRefs.current[i] = el; }}
                 to={item.to}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'liquid-glass liquid-glass-shine flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm transition-all duration-300',
+                  'relative z-10 flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm transition-colors duration-300',
                   active
                     ? 'nav-item-active'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Icon className={cn('h-4 w-4 transition-transform', active && 'nav-icon-bounce')} />

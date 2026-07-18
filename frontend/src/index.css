@@ -561,16 +561,30 @@
    - 填充样式切换 + 外圈微光光晕
    ============================================================ */
 .nav-item-active {
+  /* 选中文字/图标变主色（填充+光晕由滑动层 .nav-indicator 提供） */
+  color: var(--primary);
+}
+
+/* 滑动高亮指示层：在选中项之间平移移动（视觉"滑过去"的效果） */
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 0.75rem;
   /* 填充背景（主色微染） */
   background: color-mix(in oklch, var(--primary) 24%, transparent);
-  color: var(--primary);
   /* 外圈微光光晕 + 描边 */
   box-shadow:
     0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent),
     0 2px 10px color-mix(in oklch, var(--primary) 30%, transparent),
     0 0 16px color-mix(in oklch, var(--primary) 50%, transparent);
-  /* 选中项整体轻微上浮抬升 */
-  transform: translateY(-2px);
+  /* 关键：transform + width 带弹性过渡 → 在选项间平滑滑过 */
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* 选中图标 ElasticOut 弹性曲线（多级回弹振荡 + 上浮） */
