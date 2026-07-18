@@ -5,7 +5,7 @@ import { allWords, partStructure, getWordsByList } from '@/lib/words-data';
 import { useStarred } from '@/hooks/use-storage';
 import { useWrongWords } from '@/hooks/use-wrong-words';
 import { useCustomWords } from '@/hooks/use-custom-words';
-import { speakWord, speakChinese } from '@/lib/speak';
+import { speakWord } from '@/lib/speak';
 import { cn } from '@/lib/utils';
 import { FlyIn } from '@/components/MotionPrimitives';
 
@@ -89,9 +89,8 @@ export default function Quiz() {
     if (!current) return;
     if (mode === 'en') {
       speakWord(current.word);
-    } else {
-      speakChinese(current.meaning);
     }
+    // cn 模式：直接显示中文释义文字，不再播放语音
   }, [current, mode]);
 
   // 每题出现自动朗读
@@ -136,9 +135,9 @@ export default function Quiz() {
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         <FlyIn>
           <h1 className="mb-1 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
-            听写测验
+            听写拼写测验
           </h1>
-          <p className="mb-6 text-muted-foreground">听发音写单词，或听中文默写英文。拼错会自动进入错词本。</p>
+          <p className="mb-6 text-muted-foreground">听英文写单词，或看中文释义拼英文。拼错会自动进入错词本。</p>
 
           {/* 模式选择 */}
           <div className="liquid-glass mb-4 rounded-2xl p-5">
@@ -166,8 +165,8 @@ export default function Quiz() {
               >
                 <Languages className="h-4 w-4" />
                 <div className="text-left">
-                  <div className="font-medium">中文默写</div>
-                  <div className="text-xs opacity-70">听中文释义，默写英文</div>
+                  <div className="font-medium">看汉语写英语</div>
+                  <div className="text-xs opacity-70">看中文释义，写出英文单词</div>
                 </div>
               </button>
             </div>
@@ -309,7 +308,7 @@ export default function Quiz() {
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
         <span className="font-mono">{index + 1} / {items.length}</span>
-        <span>{mode === 'en' ? '英文听写' : '中文默写'} · 正确 {correct}</span>
+        <span>{mode === 'en' ? '英文听写' : '看汉语写英语'} · 正确 {correct}</span>
       </div>
       <div className="mb-5 h-1 w-full overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${((index + 1) / items.length) * 100}%` }} />
@@ -317,20 +316,27 @@ export default function Quiz() {
 
       <div className="liquid-glass rounded-2xl p-6">
         <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={play}
-            className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-6 py-3 text-primary transition-all hover:-translate-y-0.5 active:scale-95"
-          >
-            {mode === 'en' ? <Volume2 className="h-5 w-5" /> : <Languages className="h-5 w-5" />}
-            {mode === 'en' ? '播放发音' : '播放中文'}
-          </button>
+          {mode === 'en' ? (
+            <button
+              onClick={play}
+              className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-6 py-3 text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+            >
+              <Volume2 className="h-5 w-5" />
+              播放发音
+            </button>
+          ) : (
+            /* cn 模式：直接展示中文释义 */
+            <div className="max-w-md px-4 py-6 text-center">
+              <p className="text-lg font-medium leading-relaxed text-primary/90">{current?.meaning}</p>
+            </div>
+          )}
         </div>
-        {/* 英文听写模式可显示音标提示；中文默写模式不显示音标（避免泄露拼写） */}
+        {/* 英文听写模式可显示音标提示；cn 模式显示提示语 */}
         {mode === 'en' && current.phonetic && (
           <p className="mt-3 text-center font-mono text-sm text-muted-foreground/60">音标：{current.phonetic}</p>
         )}
         {mode === 'cn' && (
-          <p className="mt-3 text-center text-sm text-muted-foreground/60">听中文释义，默写出英文单词</p>
+          <p className="mt-2 text-center text-sm text-muted-foreground/60">根据上方中文释义，写出对应的英文单词</p>
         )}
 
         <input

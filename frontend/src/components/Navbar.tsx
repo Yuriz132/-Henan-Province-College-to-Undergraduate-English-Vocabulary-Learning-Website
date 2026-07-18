@@ -16,7 +16,7 @@ const navItems = [
 ];
 
 // 空闲多久后自动上滑隐藏（ms）
-const IDLE_HIDE_MS = 2000;
+const IDLE_HIDE_MS = 4500;
 // 左右滑动切换页面的阈值（px）
 const SWIPE_THRESHOLD = 45;
 

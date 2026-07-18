@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight, MessageSquare, Target } from 'lucide-react';
+import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight, MessageSquare, Target, Users, Flame, BarChart3 } from 'lucide-react';
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
+import { useDailyStats } from '@/hooks/use-daily-stats';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
 import { StudyPlans } from '@/components/StudyPlans';
-import { lazy, Suspense, useState } from 'react';
+import { StudyChart } from '@/components/StudyChart';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import apiClient from '@/lib/api-client';
 
 const SiteFeedback = lazy(() =>
   import('@/components/WordComments').then((m) => ({
@@ -30,20 +33,40 @@ export default function Index() {
   const { count: starredCount } = useStarred();
   const { count: knownCount } = useKnown();
   const { progress } = useProgress();
+  const { streak, dailyAverage, last30days, recordDay } = useDailyStats();
   const [planOpen, setPlanOpen] = useState(false);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [chartOpen, setChartOpen] = useState(false);
+
+  const totalReviewed = Object.values(progress).reduce((sum, p) => sum + p.reviewed, 0);
+  const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
+
+  // 自动记录每日学习量（进度变化时累计）
+  const prevReviewedRef = useRef(totalReviewed);
+  useEffect(() => {
+    if (totalReviewed > (prevReviewedRef.current ?? 0)) {
+      recordDay(totalReviewed - (prevReviewedRef.current ?? 0));
+      prevReviewedRef.current = totalReviewed;
+    }
+  }, [totalReviewed]);
+
+  useEffect(() => {
+    apiClient.get<{ totalUsers: number }>('/stats')
+      .then((res) => setTotalUsers(res.data.totalUsers ?? 0))
+      .catch(() => {});
+  }, []);
 
   const scrollToFeedback = () => {
     document.getElementById('feedback-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-
-  const totalReviewed = Object.values(progress).reduce((sum, p) => sum + p.reviewed, 0);
-  const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
 
   const stats = [
     { label: '单词总数', value: allWords.length, icon: Layers, color: 'text-primary' },
     { label: '已收藏', value: starredCount, icon: Star, color: 'text-warning' },
     { label: '已掌握', value: knownCount, icon: TrendingUp, color: 'text-success' },
     { label: '学习进度', value: `${totalProgress}%`, icon: BookOpen, color: 'text-accent' },
+    { label: '连续天数', value: streak, icon: Flame, color: 'text-orange-400' },
+    { label: '日均单词', value: dailyAverage, icon: BarChart3, color: 'text-cyan-400' },
   ];
 
   return (
@@ -87,21 +110,43 @@ export default function Index() {
         </div>
       </ExplodeIn>
 
-      {/* 统计 — flyIn 增强飞入（手动包裹） */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* 当前学习人数 */}
+      <FlyIn delay={0.02}>
+        <p className="mb-6 flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
+          <Users className="h-3.5 w-3.5" />
+          当前已有 <span className="font-medium text-foreground/80">{totalUsers}</span> 位同学在学
+          <span className="mx-1">·</span>
+          收录 <span className="font-medium text-foreground/80">{allWords.length.toLocaleString()}</span> 个专升本核心词汇
+        </p>
+      </FlyIn>
+
+      {/* 统计 — 6张卡片 3列布局，点击弹出折线图 */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {stats.map((s, idx) => {
           const Icon = s.icon;
           return (
-            <FlyIn key={s.label} delay={idx * 0.06}>
-              <div className="liquid-glass card-bounce p-4" style={{ borderRadius: 'var(--radius-lg)' }}>
+            <FlyIn key={s.label} delay={idx * 0.05}>
+              <button
+                onClick={() => setChartOpen(true)}
+                className="liquid-glass card-bounce w-full p-4 text-left transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+                style={{ borderRadius: 'var(--radius-lg)' }}
+              >
                 <Icon className={`mb-2 h-5 w-5 ${s.color}`} />
                 <div className="text-2xl font-bold text-foreground">{s.value}</div>
                 <div className="text-xs text-muted-foreground">{s.label}</div>
-              </div>
+              </button>
             </FlyIn>
           );
         })}
       </div>
+
+      {/* 折线图弹窗 */}
+      <StudyChart
+        data={last30days}
+        title="近30天学习趋势"
+        open={chartOpen}
+        onOpenChange={setChartOpen}
+      />
 
       {/* Part 导航标题 */}
       <FlyIn delay={0.05}>

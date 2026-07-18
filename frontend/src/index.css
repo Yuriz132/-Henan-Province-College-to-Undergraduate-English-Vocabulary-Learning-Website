@@ -538,7 +538,7 @@
    ============================================================ */
 .lg-imm-bar {
   transition:
-    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow var(--duration-normal, 200ms) var(--ease-default, ease),
     border-color var(--duration-normal, 200ms) var(--ease-default, ease);
   will-change: transform;
@@ -551,8 +551,8 @@
 .lg-imm-hidden {
   transform: translateY(-200%);
   pointer-events: none;
-  /* 隐藏动画更长更缓（0.9s）；弹出时元素无此 class，回落到 .lg-imm-bar 的 0.55s */
-  transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 隐藏动画更长更缓（1.4s ease-out 风格）；弹出时回落到 .lg-imm-bar 的 0.8s */
+  transition: transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ============================================================

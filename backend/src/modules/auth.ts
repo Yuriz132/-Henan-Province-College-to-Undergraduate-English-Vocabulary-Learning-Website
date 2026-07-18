@@ -18,9 +18,11 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json')
 // ---------- 类型 ----------
 export interface StudyPlan {
   id: string
-  type: 'chapters' | 'words' | 'custom'
+  type: 'units' | 'words' | 'custom'
   title: string
   target: number
+  // type=units 时：选中的 listKey 列表
+  selectedLists?: string[]
   // 仅自定义任务(type=custom)使用：子任务清单
   tasks?: { id: string; text: string; done: boolean }[]
   createdAt: number
@@ -123,9 +125,10 @@ const credentialsSchema = z.object({
 
 const planSchema = z.object({
   id: z.string(),
-  type: z.enum(['chapters', 'words', 'custom']),
+  type: z.enum(['units', 'words', 'custom']),
   title: z.string(),
   target: z.number().int().nonnegative(),
+  selectedLists: z.array(z.string()).optional(),
   tasks: z
     .array(z.object({ id: z.string(), text: z.string(), done: z.boolean() }))
     .optional(),

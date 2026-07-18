@@ -1,4 +1,9 @@
 import { Router, Request, Response } from 'express'
+import { promises as fs } from 'fs'
+import path from 'path'
+
+// 复用 auth 模块的 data 目录路径（users.json 同目录）
+const DATA_DIR = path.resolve(__dirname, '..', '..', 'data')
 
 export const systemRouter: Router = Router()
 
@@ -75,8 +80,19 @@ systemRouter.get('/ping', async (_req: Request, res: Response) => {
 })
 
 /**
- * System status with uptime and memory info
+ * 公开统计（无需鉴权）：用户数、词库总数等
  */
+systemRouter.get('/stats', async (_req: Request, res: Response) => {
+  let totalUsers = 0
+  try {
+    const raw = await fs.readFile(path.join(DATA_DIR, 'users.json'), 'utf-8')
+    const users = JSON.parse(raw)
+    totalUsers = Array.isArray(users) ? users.length : 0
+  } catch {
+    // 文件不存在时返回 0
+  }
+  res.json({ totalUsers })
+})
 systemRouter.get('/status', async (_req: Request, res: Response) => {
   const memoryUsage = process.memoryUsage()
 
