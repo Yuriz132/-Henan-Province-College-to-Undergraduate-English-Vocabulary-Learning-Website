@@ -7,6 +7,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { LiquidBackground } from "@/components/LiquidBackground";
 import { Navbar } from "@/components/Navbar";
 import { PomodoroTimer } from "@/components/PomodoroTimer";
+import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 import Flashcards from "./pages/Flashcards";
@@ -17,6 +18,7 @@ import CustomLibrary from "./pages/CustomLibrary";
 import CustomFlashcards from "./pages/CustomFlashcards";
 import Quiz from "./pages/Quiz";
 import Confusables from "./pages/Confusables";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +39,11 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
-          <LiquidBackground />
-          <Navbar />
-          <main className="relative z-10 min-h-screen pb-12">
-            <AnimatedRoutes>
+          <AuthProvider>
+            <LiquidBackground />
+            <Navbar />
+            <main className="relative z-10 min-h-screen pb-12">
+              <AnimatedRoutes>
               <Route path="/" data-genie-title="概览" data-genie-key="Home" element={<PageTransition transition="fadethrough"><Index /></PageTransition>} />
               <Route path="/browse" data-genie-title="浏览" data-genie-key="Browse" element={<PageTransition transition="fadethrough"><Browse /></PageTransition>} />
               <Route path="/browse/:part" data-genie-title="Part 列表" data-genie-key="BrowsePart" element={<PageTransition transition="fadethrough"><Browse /></PageTransition>} />
@@ -53,10 +56,12 @@ function App() {
               <Route path="/confusables" data-genie-title="近义词辨析" data-genie-key="Confusables" element={<PageTransition transition="fadethrough"><Confusables /></PageTransition>} />
               <Route path="/search" data-genie-title="搜索" data-genie-key="Search" element={<PageTransition transition="fadethrough"><SearchPage /></PageTransition>} />
               <Route path="/starred" data-genie-title="生词本" data-genie-key="Starred" element={<PageTransition transition="fadethrough"><Starred /></PageTransition>} />
+              <Route path="/login" data-genie-title="登录" data-genie-key="Login" element={<PageTransition transition="fadethrough"><Login /></PageTransition>} />
               <Route path="*" data-genie-key="NotFound" data-genie-title="Not Found" element={<PageTransition transition="fadethrough"><NotFound /></PageTransition>} />
             </AnimatedRoutes>
             <PomodoroTimer />
           </main>
+            </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

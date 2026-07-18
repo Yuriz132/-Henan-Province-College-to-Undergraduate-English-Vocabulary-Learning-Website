@@ -6,6 +6,7 @@ import { env } from './config/env'
 import { errorHandler } from './middleware/errorHandler'
 import { httpLogger } from './middleware/logger'
 import { systemRouter } from './modules/system'
+import { authRouter } from './modules/auth'
 // ============================================
 // Add your domain module imports here
 // ============================================
@@ -32,6 +33,9 @@ export const createApp = (): Application => {
 
   // API routes - System & Health
   app.use(env.API_PREFIX, systemRouter)
+
+  // 账户 + 云端学习进度
+  app.use(env.API_PREFIX, authRouter)
 
   // ============================================
   // Add your domain module routes here

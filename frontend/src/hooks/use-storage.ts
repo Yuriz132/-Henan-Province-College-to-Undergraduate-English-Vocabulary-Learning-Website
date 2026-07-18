@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { pushToCloud } from '@/lib/progressSync';
 
 const STARRED_KEY = 'liquid-words:starred';
 const PROGRESS_KEY = 'liquid-words:progress';
@@ -37,25 +38,23 @@ export function useStarred() {
   const [starred, setStarred] = useState<Set<number>>(() => readSet(STARRED_KEY));
 
   const toggle = useCallback((id: number) => {
-    setStarred((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      writeSet(STARRED_KEY, next);
-      return next;
-    });
-  }, []);
+    const next = new Set(starred);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setStarred(next);
+    writeSet(STARRED_KEY, next);
+    pushToCloud({ starred: [...next] });
+  }, [starred]);
 
   const isStarred = useCallback((id: number) => starred.has(id), [starred]);
 
   const remove = useCallback((id: number) => {
-    setStarred((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      writeSet(STARRED_KEY, next);
-      return next;
-    });
-  }, []);
+    const next = new Set(starred);
+    next.delete(id);
+    setStarred(next);
+    writeSet(STARRED_KEY, next);
+    pushToCloud({ starred: [...next] });
+  }, [starred]);
 
   const clear = useCallback(() => {
     setStarred(new Set());
@@ -70,14 +69,13 @@ export function useKnown() {
   const [known, setKnown] = useState<Set<number>>(() => readSet(KNOWN_KEY));
 
   const toggle = useCallback((id: number) => {
-    setKnown((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      writeSet(KNOWN_KEY, next);
-      return next;
-    });
-  }, []);
+    const next = new Set(known);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setKnown(next);
+    writeSet(KNOWN_KEY, next);
+    pushToCloud({ known: [...next] });
+  }, [known]);
 
   const isKnown = useCallback((id: number) => known.has(id), [known]);
 
@@ -94,24 +92,22 @@ export function useProgress() {
   );
 
   const setListProgress = useCallback((listKey: string, reviewed: number, total: number) => {
-    setProgress((prev) => {
-      const next = { ...prev, [listKey]: { reviewed, total } };
-      writeProgress(next);
-      return next;
-    });
-  }, []);
+    const next = { ...progress, [listKey]: { reviewed, total } };
+    setProgress(next);
+    writeProgress(next);
+    pushToCloud({ progress: next });
+  }, [progress]);
 
   const markReviewed = useCallback((listKey: string, reviewed: number, total: number) => {
-    setProgress((prev) => {
-      const existing = prev[listKey] ?? { reviewed: 0, total };
-      const next = {
-        ...prev,
-        [listKey]: { reviewed: Math.max(existing.reviewed, reviewed), total },
-      };
-      writeProgress(next);
-      return next;
-    });
-  }, []);
+    const existing = progress[listKey] ?? { reviewed: 0, total };
+    const next = {
+      ...progress,
+      [listKey]: { reviewed: Math.max(existing.reviewed, reviewed), total },
+    };
+    setProgress(next);
+    writeProgress(next);
+    pushToCloud({ progress: next });
+  }, [progress]);
 
   const clear = useCallback(() => {
     setProgress({});

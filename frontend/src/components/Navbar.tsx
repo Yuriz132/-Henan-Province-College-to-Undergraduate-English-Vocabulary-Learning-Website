@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LiquidGlass } from '@/components/LiquidGlass';
+import { AccountMenu } from '@/components/AccountMenu';
 
 const navItems = [
   { to: '/', label: '概览', icon: LayoutGrid },
@@ -137,6 +138,7 @@ export function Navbar() {
               </Link>
             );
           })}
+          <AccountMenu />
         </nav>
       </LiquidGlass>
     </header>

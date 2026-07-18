@@ -37,10 +37,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // Handle 401 Unauthorized - redirect to login
+    // Handle 401 Unauthorized - clear auth state
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
-      // Uncomment when you have a login page
+      localStorage.removeItem('auth_user');
+      // 需要跳转登录页时可启用：
       // window.location.href = '/login';
     }
 
