@@ -41,7 +41,13 @@ function computeCurrent(
   return Object.values(progress).reduce((s, p) => s + p.reviewed, 0);
 }
 
-const EMPTY_TASK = () => ({ id: crypto.randomUUID(), text: '' });
+/** 与运行环境无关的 UUID 生成器（crypto.randomUUID 仅在安全上下文可用，HTTP 下会 undefined） */
+const uuid = (): string =>
+  (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
+
+const EMPTY_TASK = () => ({ id: uuid(), text: '' });
 
 export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
   const { plans, addPlan, removePlan, toggleTask } = useStudyPlans();
@@ -66,7 +72,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
 
   const onCreate = () => {
     const plan: StudyPlan = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       type,
       title: title.trim() || PLAN_TYPE_LABEL[type],
       target:
