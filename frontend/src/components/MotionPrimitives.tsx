@@ -6,8 +6,8 @@ const ease = [0.25, 0.46, 0.45, 0.94] as const;
 /** 鸿蒙风格弹性缓出曲线（类 spring，用于页面切换和卡片飞入） */
 const harmonyEase = [0.22, 1, 0.36, 1] as const;
 const springBounce = { type: 'spring', damping: 20, stiffness: 300 } as const;
-/** 开屏飞入物理弹簧参数 */
-const explodeSpring = { type: 'spring' as const, damping: 18, stiffness: 280 };
+/** 开屏飞入：纯 scale + opacity，零位移避免跨屏跳跃 */
+const explodeSpring = { type: 'spring' as const, damping: 28, stiffness: 240 };
 
 // ── Variant factories ──
 export const fadeUp: Variants = {
@@ -183,8 +183,8 @@ export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, scale: initialScale, y: 36 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, scale: initialScale }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ ...explodeSpring, delay: delay || undefined }}
         className={className}
         {...props}

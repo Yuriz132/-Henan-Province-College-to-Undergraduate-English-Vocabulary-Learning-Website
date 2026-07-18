@@ -616,12 +616,12 @@
   .nav-item-active { transform: none; }
 }
 
-/* 番茄钟面板：文字内容区轻羽化毛玻璃
-   仅在紧贴文字处带微弱雾感，不破坏液态玻璃透明质感 */
+/* 番茄钟面板：文字内容区羽化毛玻璃
+   紧贴文字的轻雾感（blur 6px），不破坏液态玻璃透明质感 */
 .pomo-frost {
-  backdrop-filter: blur(3px) saturate(1.1);
-  -webkit-backdrop-filter: blur(3px) saturate(1.1);
-  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(6px) saturate(1.15);
+  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: calc(var(--radius) + 4px);
 }
 
