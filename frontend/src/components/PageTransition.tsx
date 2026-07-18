@@ -27,6 +27,12 @@ const variants = {
     animate: { opacity: 1, x: 0, scale: 1 },
     exit: { opacity: 0, x: -16, scale: 0.98 },
   },
+  /** FadeThrough 淡入过渡：旧淡出 + 新淡入并轻微放大(0.92→1)，无位移 */
+  fadethrough: {
+    initial: { opacity: 0, scale: 0.92 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.98 },
+  },
 };
 
 type TransitionMode = keyof typeof variants;
@@ -50,17 +56,25 @@ interface PageTransitionProps {
  * Navbar/Header/Sidebar 必须在 AnimatedRoutes 外部，不要包在 PageTransition 里。
  */
 const HARMONY_TRANSITION = { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const };
+const FADETHROUGH_TRANSITION = { duration: 0.32, ease: [0.4, 0, 0.2, 1] as const };
 const DEFAULT_TRANSITION = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const };
 
 export function PageTransition({ children, transition = "fade" }: PageTransitionProps) {
   const v = variants[transition];
+
+  const transitionConfig =
+    transition === 'harmony'
+      ? HARMONY_TRANSITION
+      : transition === 'fadethrough'
+        ? FADETHROUGH_TRANSITION
+        : DEFAULT_TRANSITION;
 
   return (
     <motion.div
       initial={v.initial}
       animate={v.animate}
       exit={v.exit}
-      transition={transition === 'harmony' ? HARMONY_TRANSITION : DEFAULT_TRANSITION}
+      transition={transitionConfig}
     >
       {children}
     </motion.div>

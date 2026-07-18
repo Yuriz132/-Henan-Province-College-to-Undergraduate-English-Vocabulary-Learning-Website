@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LiquidGlass } from '@/components/LiquidGlass';
@@ -16,13 +16,16 @@ const navItems = [
 
 // 空闲多久后自动上滑隐藏（ms）
 const IDLE_HIDE_MS = 2000;
+// 左右滑动切换页面的阈值（px）
+const SWIPE_THRESHOLD = 45;
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
   const hideTimer = useRef<number | null>(null);
 
-  // 不滑动 / 不操作超过 6s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
+  // 不滑动 / 不操作超过 2s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
   useEffect(() => {
     const wake = () => {
       setHidden(false);
@@ -39,8 +42,30 @@ export function Navbar() {
     };
   }, []);
 
+  // 左右滑动切换页面：左滑→下一页，右滑→上一页
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+    touchStart.current = null;
+    // 必须是明显的水平滑动（水平位移 > 垂直，且超过阈值）
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
+    const idx = navItems.findIndex((item) =>
+      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)
+    );
+    if (idx === -1) return;
+    const nextIdx = dx > 0 ? idx - 1 : idx + 1; // 右滑(dx>0)→上一页，左滑→下一页
+    if (nextIdx >= 0 && nextIdx < navItems.length) {
+      navigate(navItems[nextIdx].to);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full">
+    <header className="sticky top-0 z-50 w-full" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <LiquidGlass
         as="div"
         className={cn(
@@ -59,15 +84,16 @@ export function Navbar() {
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'liquid-glass liquid-glass-shine flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all active:scale-95',
+                  'liquid-glass liquid-glass-shine flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm transition-all duration-300',
                   active
-                    ? 'liquid-glass-accent text-primary'
+                    ? 'nav-item-active'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{item.label}</span>
+                <Icon className={cn('h-4 w-4 transition-transform', active && 'nav-icon-bounce')} />
+                <span className={cn('hidden sm:inline', active && 'nav-label-pop')}>{item.label}</span>
               </Link>
             );
           })}

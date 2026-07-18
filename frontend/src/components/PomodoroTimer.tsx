@@ -154,6 +154,8 @@ export function PomodoroTimer() {
       {/* 展开面板 */}
       {expanded && (
         <LiquidGlass as="div" className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
+          {/* 文字内容区局部毛玻璃模糊层：文字更朦胧，外缘玻璃壳仍是液态玻璃折射 */}
+          <div className="pomo-frost">
           {!showSettings ? (
             <>
               {/* 模式切换 */}
@@ -279,6 +281,7 @@ export function PomodoroTimer() {
               </button>
             </>
           )}
+          </div>
         </LiquidGlass>
       )}
 
