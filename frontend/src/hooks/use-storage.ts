@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { pushToCloud } from '@/lib/progressSync';
+import type { StudyPlan } from '@/lib/studyPlans';
 
 const STARRED_KEY = 'liquid-words:starred';
 const PROGRESS_KEY = 'liquid-words:progress';
@@ -115,4 +116,58 @@ export function useProgress() {
   }, []);
 
   return { progress, getListProgress, setListProgress, markReviewed, clear };
+}
+
+/** 学习计划：本地存储 + 登录后增量同步到云端 */
+const PLANS_KEY = 'liquid-words:plans';
+
+function readPlans(): StudyPlan[] {
+  try {
+    const raw = localStorage.getItem(PLANS_KEY);
+    return raw ? (JSON.parse(raw) as StudyPlan[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePlans(plans: StudyPlan[]) {
+  localStorage.setItem(PLANS_KEY, JSON.stringify(plans));
+  pushToCloud({ plans });
+}
+
+export function useStudyPlans() {
+  const [plans, setPlans] = useState<StudyPlan[]>(() => readPlans());
+
+  const addPlan = useCallback(
+    (plan: StudyPlan) => {
+      const next = [plan, ...plans];
+      setPlans(next);
+      writePlans(next);
+    },
+    [plans]
+  );
+
+  const removePlan = useCallback(
+    (id: string) => {
+      const next = plans.filter((p) => p.id !== id);
+      setPlans(next);
+      writePlans(next);
+    },
+    [plans]
+  );
+
+  const toggleTask = useCallback(
+    (planId: string, taskId: string) => {
+      const next = plans.map((p) =>
+        p.id === planId
+          ? { ...p, tasks: (p.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) }
+          : p
+      );
+      setPlans(next);
+      writePlans(next);
+    },
+    [plans]
+  );
+
+  return { plans, addPlan, removePlan, toggleTask };
 }

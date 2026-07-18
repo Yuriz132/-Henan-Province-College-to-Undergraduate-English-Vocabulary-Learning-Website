@@ -7,6 +7,7 @@
 const STARRED_KEY = 'liquid-words:starred';
 const KNOWN_KEY = 'liquid-words:known';
 const PROGRESS_KEY = 'liquid-words:progress';
+const PLANS_KEY = 'liquid-words:plans';
 
 export interface ProgressData {
   app: 'liquid-words';
@@ -15,6 +16,7 @@ export interface ProgressData {
   starred: number[];
   known: number[];
   progress: Record<string, { reviewed: number; total: number }>;
+  plans?: unknown[];
 }
 
 function readRaw(key: string): unknown {
@@ -32,6 +34,7 @@ export function exportProgress(): void {
   const knownRaw = readRaw(KNOWN_KEY);
   const progressRaw = readRaw(PROGRESS_KEY);
 
+  const plansRaw = readRaw(PLANS_KEY);
   const data: ProgressData = {
     app: 'liquid-words',
     version: 1,
@@ -40,6 +43,7 @@ export function exportProgress(): void {
     known: Array.isArray(knownRaw) ? (knownRaw as number[]) : [],
     progress:
       progressRaw && typeof progressRaw === 'object' ? (progressRaw as ProgressData['progress']) : {},
+    plans: Array.isArray(plansRaw) ? (plansRaw as unknown[]) : [],
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -78,5 +82,8 @@ export async function importProgress(file: File): Promise<void> {
   }
   if (data.progress && typeof data.progress === 'object') {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(data.progress));
+  }
+  if (Array.isArray(data.plans)) {
+    localStorage.setItem(PLANS_KEY, JSON.stringify(data.plans));
   }
 }

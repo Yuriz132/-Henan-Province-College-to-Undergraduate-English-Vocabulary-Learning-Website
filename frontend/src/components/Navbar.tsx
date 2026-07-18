@@ -74,30 +74,71 @@ export function Navbar() {
     };
   }, []);
 
-  // 左右滑动切换页面：左滑→下一页，右滑→上一页
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart.current) return;
-    const dx = e.changedTouches[0].clientX - touchStart.current.x;
-    const dy = e.changedTouches[0].clientY - touchStart.current.y;
-    touchStart.current = null;
-    // 必须是明显的水平滑动（水平位移 > 垂直，且超过阈值）
-    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
-    const idx = navItems.findIndex((item) =>
-      item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to)
-    );
-    if (idx === -1) return;
-    const nextIdx = dx > 0 ? idx - 1 : idx + 1; // 右滑(dx>0)→上一页，左滑→下一页
-    if (nextIdx >= 0 && nextIdx < navItems.length) {
-      navigate(navItems[nextIdx].to);
-    }
-  };
+  // 左右滑动切换页面：触摸滑动 / 触控板双指(滚轮 deltaX) / 鼠标拖拽 统一处理
+  const lastNav = useRef(0);
+  const pathRef = useRef(location.pathname);
+  useEffect(() => {
+    pathRef.current = location.pathname;
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const findIdx = () =>
+      navItems.findIndex((item) =>
+        item.to === '/' ? pathRef.current === '/' : pathRef.current.startsWith(item.to)
+      );
+    const go = (dir: number) => {
+      const now = Date.now();
+      if (now - lastNav.current < 600) return; // 冷却，避免一次滑动连续翻页
+      const idx = findIdx();
+      if (idx === -1) return;
+      const next = idx + dir;
+      if (next >= 0 && next < navItems.length) {
+        lastNav.current = now;
+        navigate(navItems[next].to);
+      }
+    };
+
+    // 触控板双指横向滑动：wheel 事件的 deltaX 主导
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > SWIPE_THRESHOLD) {
+        go(e.deltaX < 0 ? 1 : -1);
+      }
+    };
+
+    // 鼠标拖拽 / 触摸滑动：pointer 事件，水平位移且大于垂直、超过阈值才触发
+    let sx = 0;
+    let sy = 0;
+    let tracking = false;
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      // 在输入框/按钮/链接/弹窗上不起始，避免误触与干扰点击
+      if (t && t.closest('input,textarea,select,button,a,[role="dialog"]')) return;
+      sx = e.clientX;
+      sy = e.clientY;
+      tracking = true;
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = e.clientX - sx;
+      const dy = e.clientY - sy;
+      if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
+        go(dx > 0 ? -1 : 1);
+      }
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+    window.addEventListener('pointerup', onPointerUp, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [navigate]);
 
   return (
-    <header className="sticky top-0 z-50 w-full" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <header className="sticky top-0 z-50 w-full">
       <LiquidGlass
         as="div"
         className={cn(

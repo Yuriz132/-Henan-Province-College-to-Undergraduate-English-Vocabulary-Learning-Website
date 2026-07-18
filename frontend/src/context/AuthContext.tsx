@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { apiLogin, apiRegister, apiGetProgress, apiSaveProgress, type CloudProgress } from '@/lib/authApi'
 import { setCloudUploader } from '@/lib/progressSync'
+import type { StudyPlan } from '@/lib/studyPlans'
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
@@ -9,6 +10,26 @@ const USER_KEY = 'auth_user'
 const STARRED_KEY = 'liquid-words:starred'
 const KNOWN_KEY = 'liquid-words:known'
 const PROGRESS_KEY = 'liquid-words:progress'
+const PLANS_KEY = 'liquid-words:plans'
+
+function readPlans(): StudyPlan[] {
+  try {
+    const raw = localStorage.getItem(PLANS_KEY)
+    return raw ? (JSON.parse(raw) as StudyPlan[]) : []
+  } catch {
+    return []
+  }
+}
+function writePlans(v: StudyPlan[]) {
+  localStorage.setItem(PLANS_KEY, JSON.stringify(v))
+}
+/** 云端进度合并回本地：计划按 id 并集，冲突时云端优先 */
+function mergePlansById(local: StudyPlan[], cloud: StudyPlan[]): StudyPlan[] {
+  const map = new Map<string, StudyPlan>()
+  for (const p of local) map.set(p.id, p)
+  for (const p of cloud) map.set(p.id, p)
+  return Array.from(map.values())
+}
 
 type ProgressMap = Record<string, { reviewed: number; total: number }>
 
@@ -49,6 +70,7 @@ function mergeCloudIntoLocal(cloud: CloudProgress) {
   writeArr(STARRED_KEY, starred)
   writeArr(KNOWN_KEY, known)
   writeProgress(merged)
+  writePlans(mergePlansById(readPlans(), cloud.plans ?? []))
 }
 
 function localSnapshot(): CloudProgress {
@@ -56,6 +78,7 @@ function localSnapshot(): CloudProgress {
     starred: readArr(STARRED_KEY),
     known: readArr(KNOWN_KEY),
     progress: readProgress(),
+    plans: readPlans(),
   }
 }
 

@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight } from 'lucide-react';
+import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight, MessageSquare, Target } from 'lucide-react';
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
-import { lazy, Suspense } from 'react';
+import { StudyPlans } from '@/components/StudyPlans';
+import { lazy, Suspense, useState } from 'react';
 
 const SiteFeedback = lazy(() =>
   import('@/components/WordComments').then((m) => ({
@@ -29,6 +30,11 @@ export default function Index() {
   const { count: starredCount } = useStarred();
   const { count: knownCount } = useKnown();
   const { progress } = useProgress();
+  const [planOpen, setPlanOpen] = useState(false);
+
+  const scrollToFeedback = () => {
+    document.getElementById('feedback-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const totalReviewed = Object.values(progress).reduce((sum, p) => sum + p.reviewed, 0);
   const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
@@ -48,7 +54,7 @@ export default function Index() {
           style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <h1 className="font-bold text-gradient"
-            style={{ fontSize: 'var(--font-size-display)', lineHeight: 1.1 }}
+            style={{ fontSize: 'clamp(2.2rem, 8vw, 2.8rem)', lineHeight: 1.1 }}
           >
             升本词汇
           </h1>
@@ -65,6 +71,18 @@ export default function Index() {
             >
               <Search className="h-4 w-4" /> 搜索单词
             </Link>
+            <button
+              onClick={scrollToFeedback}
+              className="liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-6 py-2.5 text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-foreground active:scale-95"
+            >
+              <MessageSquare className="h-4 w-4" /> 讨论建议
+            </button>
+            <button
+              onClick={() => setPlanOpen(true)}
+              className="liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-6 py-2.5 text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-foreground active:scale-95"
+            >
+              <Target className="h-4 w-4" /> 学习计划
+            </button>
           </div>
         </div>
       </ExplodeIn>
@@ -130,6 +148,13 @@ export default function Index() {
         })}
       </div>
 
+      {/* 学习计划 */}
+      <FlyIn delay={0.08}>
+        <div className="mt-8 w-full">
+          <StudyPlans open={planOpen} onOpenChange={setPlanOpen} />
+        </div>
+      </FlyIn>
+
       {/* 学习进度备份 */}
       <FlyIn delay={0.1}>
         <div className="mt-8 w-full">
@@ -141,7 +166,7 @@ export default function Index() {
 
       {/* 网站反馈与建议 */}
       <FlyIn delay={0.12}>
-        <div className="mt-8 w-full">
+        <div id="feedback-section" className="mt-8 w-full">
           <Suspense fallback={null}>
             <SiteFeedback />
           </Suspense>

@@ -1,9 +1,11 @@
-import apiClient from './api-client'
+import apiClient from './api-client';
+import type { StudyPlan } from '@/lib/studyPlans';
 
 export interface CloudProgress {
   starred?: number[]
   known?: number[]
   progress?: Record<string, { reviewed: number; total: number }>
+  plans?: StudyPlan[]
 }
 
 export interface AuthResult {

@@ -16,10 +16,21 @@ const DATA_DIR = path.resolve(__dirname, '..', '..', 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
 
 // ---------- 类型 ----------
+export interface StudyPlan {
+  id: string
+  type: 'chapters' | 'words' | 'custom'
+  title: string
+  target: number
+  // 仅自定义任务(type=custom)使用：子任务清单
+  tasks?: { id: string; text: string; done: boolean }[]
+  createdAt: number
+}
+
 interface ProgressData {
   starred: number[]
   known: number[]
   progress: Record<string, { reviewed: number; total: number }>
+  plans: StudyPlan[]
 }
 
 interface User {
@@ -32,7 +43,7 @@ interface User {
 
 type AuthedRequest = Request & { user?: User }
 
-const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {} }
+const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, plans: [] }
 
 // ---------- 文件读写（带缓存，减少磁盘 IO）----------
 let usersCache: User[] | null = null
@@ -110,6 +121,17 @@ const credentialsSchema = z.object({
   password: z.string().min(6, '密码至少 6 位').max(64, '密码过长'),
 })
 
+const planSchema = z.object({
+  id: z.string(),
+  type: z.enum(['chapters', 'words', 'custom']),
+  title: z.string(),
+  target: z.number().int().nonnegative(),
+  tasks: z
+    .array(z.object({ id: z.string(), text: z.string(), done: z.boolean() }))
+    .optional(),
+  createdAt: z.number(),
+})
+
 const progressSchema = z
   .object({
     starred: z.array(z.number().int()).optional(),
@@ -117,10 +139,18 @@ const progressSchema = z
     progress: z
       .record(z.string(), z.object({ reviewed: z.number().int(), total: z.number().int() }))
       .optional(),
+    plans: z.array(planSchema).optional(),
   })
-  .refine((d) => d.starred !== undefined || d.known !== undefined || d.progress !== undefined, {
-    message: '至少提供 starred / known / progress 中的一项',
-  })
+  .refine(
+    (d) =>
+      d.starred !== undefined ||
+      d.known !== undefined ||
+      d.progress !== undefined ||
+      d.plans !== undefined,
+    {
+      message: '至少提供 starred / known / progress / plans 中的一项',
+    }
+  )
 
 export const authRouter: Router = Router()
 
@@ -185,6 +215,7 @@ authRouter.put('/progress', authMiddleware, async (req: Request, res: Response) 
     starred: incoming.starred ?? user.progress.starred,
     known: incoming.known ?? user.progress.known,
     progress: incoming.progress ?? user.progress.progress,
+    plans: incoming.plans ?? user.progress.plans,
   }
   user.progress = next
   const users = await loadUsers()
