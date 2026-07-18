@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LiquidGlass } from '@/components/LiquidGlass';
 
 const navItems = [
   { to: '/', label: '概览', icon: LayoutGrid },
@@ -17,7 +18,8 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      <div
+      <LiquidGlass
+        as="div"
         className="liquid-glass mx-auto mt-3 flex max-w-5xl items-center justify-center gap-1 px-4 py-2.5 sm:px-6"
         style={{ borderRadius: 'calc(var(--radius) + 8px)' }}
       >
@@ -44,7 +46,7 @@ export function Navbar() {
             );
           })}
         </nav>
-      </div>
+      </LiquidGlass>
     </header>
   );
 }

@@ -509,8 +509,10 @@
 .liquid-glass {
   position: relative;
   background: rgba(255, 255, 255, 0.1);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6) contrast(1.05);
-  backdrop-filter: blur(14px) saturate(1.6) contrast(1.05);
+  /* 注意：默认不再使用 backdrop-filter: blur()，避免磨砂感。
+     需要真实折射的元素由 <LiquidGlass> 组件通过内联
+     backdrop-filter: url(#id) 注入（SVG 位移滤镜），其余元素仅保留
+     半透明底色 + 边缘高光，呈通透玻璃片质感。 */
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
   box-shadow:

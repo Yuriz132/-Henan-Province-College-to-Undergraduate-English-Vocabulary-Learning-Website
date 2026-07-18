@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, SkipForward, Timer, Settings, X, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LiquidGlass } from '@/components/LiquidGlass';
 
 type Mode = 'focus' | 'short' | 'long';
 
@@ -152,7 +153,7 @@ export function PomodoroTimer() {
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {/* 展开面板 */}
       {expanded && (
-        <div className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
+        <LiquidGlass as="div" className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
           {!showSettings ? (
             <>
               {/* 模式切换 */}
@@ -278,11 +279,12 @@ export function PomodoroTimer() {
               </button>
             </>
           )}
-        </div>
+        </LiquidGlass>
       )}
 
       {/* 悬浮触发按钮 */}
-      <button
+      <LiquidGlass
+        as="button"
         onClick={() => setExpanded((e) => !e)}
         className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
         style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
@@ -291,7 +293,7 @@ export function PomodoroTimer() {
         <Timer className="h-5 w-5" style={{ color }} />
         <span className="font-mono text-sm text-foreground">{mm}:{ss}</span>
         <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
-      </button>
+      </LiquidGlass>
     </div>
   );
 }
