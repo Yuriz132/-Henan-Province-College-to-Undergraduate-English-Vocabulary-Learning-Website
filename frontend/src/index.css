@@ -500,39 +500,25 @@
   50% { transform: translate(10vw, -20vh) scale(1.25); }
 }
 
-/* 顶部导航栏液体玻璃（真实折射由 LiquidGlass.tsx 注入 SVG 滤镜实现）
-   此处为静态兜底样式：支持 url() 滤镜时会被 JS 覆盖 backdrop-filter；
-   不支持时（如部分 Firefox）退化为普通磨砂玻璃，仍保持透明 + 边缘高光。 */
-.lg-glass {
-  position: relative;
-  background: oklch(1 0 0 / 0.06);
-  border: 1px solid oklch(1 0 0 / 0.18);
-  box-shadow:
-    0 8px 32px oklch(0 0 0 / 0.25),
-    inset 0 1px 1px oklch(1 0 0 / 0.4),
-    inset 0 -1px 1px oklch(0 0 0 / 0.12),
-    inset 1px 0 1px oklch(1 0 0 / 0.12),
-    inset -1px 0 1px oklch(0 0 0 / 0.12);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  backdrop-filter: blur(12px) saturate(1.4);
-  transition: border-color var(--duration-normal, 200ms) var(--ease-default, ease),
-              box-shadow var(--duration-normal, 200ms) var(--ease-default, ease);
-}
-
-/* 核心液态玻璃卡片 — 带边缘折射光晕 */
+/* ============================================================
+   液体玻璃（Liquid Glass）— 纯 CSS 磨砂玻璃，兼容手机 / 微信
+   不使用 SVG 位移滤镜（微信 X5 内核不支持 backdrop-filter:url()），
+   仅用 backdrop-filter 实现「透明 + 磨砂 + 边缘高光」。
+   颜色统一用 rgba 而非 oklch，兼容旧版微信 WebView。
+   ============================================================ */
 .liquid-glass {
   position: relative;
-  background: oklch(1 0 0 / 0.06);
-  backdrop-filter: blur(16px) saturate(1.6) contrast(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6) contrast(1.1);
-  border: 1px solid oklch(1 0 0 / 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6) contrast(1.05);
+  backdrop-filter: blur(14px) saturate(1.6) contrast(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
   box-shadow:
-    0 8px 32px oklch(0 0 0 / 0.25),
-    inset 0 1px 1px oklch(1 0 0 / 0.35),
-    inset 0 -1px 1px oklch(0 0 0 / 0.15),
-    inset 1px 0 1px oklch(1 0 0 / 0.12),
-    inset -1px 0 1px oklch(0 0 0 / 0.12);
+    0 8px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.18),
+    inset 1px 0 1px rgba(255, 255, 255, 0.12),
+    inset -1px 0 1px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   isolation: isolate;
   transition: transform var(--duration-normal, 200ms) var(--ease-default, ease),
@@ -540,47 +526,47 @@
               border-color var(--duration-normal, 200ms) var(--ease-default, ease);
 }
 
-/* 悬停效果 — 仅轻微抬升亮度与阴影，不产生折射光 */
+/* 悬停 / 激活 — 轻微抬升亮度与阴影，不产生折射 */
 .liquid-glass:hover {
-  border-color: oklch(1 0 0 / 0.25);
+  border-color: rgba(255, 255, 255, 0.28);
   box-shadow:
-    0 12px 40px oklch(0 0 0 / 0.3),
-    inset 0 1px 1px oklch(1 0 0 / 0.45),
-    inset 0 -1px 1px oklch(0 0 0 / 0.15),
-    inset 1px 0 1px oklch(1 0 0 / 0.15),
-    inset -1px 0 1px oklch(0 0 0 / 0.12);
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.18),
+    inset 1px 0 1px rgba(255, 255, 255, 0.16),
+    inset -1px 0 1px rgba(0, 0, 0, 0.12);
 }
 
-/* 强调玻璃 — 用于活跃/选中状态 */
+/* 强调玻璃 — 用于活跃/选中状态（主色微染） */
 .liquid-glass-accent {
-  background: oklch(0.65 0.18 240 / 0.18);
-  border-color: oklch(0.65 0.18 240 / 0.5);
+  background: rgba(99, 130, 255, 0.22);
+  border-color: rgba(99, 130, 255, 0.55);
   box-shadow:
-    0 8px 32px oklch(0.65 0.18 240 / 0.25),
-    0 0 16px oklch(0.65 0.18 240 / 0.15),
-    inset 0 1px 1px oklch(1 0 0 / 0.4),
-    inset 0 -1px 1px oklch(0 0 0 / 0.12);
+    0 8px 32px rgba(99, 130, 255, 0.25),
+    0 0 16px rgba(99, 130, 255, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.12);
 }
 
 .liquid-glass-accent:hover {
-  background: oklch(0.65 0.18 240 / 0.25);
-  border-color: oklch(0.65 0.18 240 / 0.6);
+  background: rgba(99, 130, 255, 0.3);
+  border-color: rgba(99, 130, 255, 0.65);
   box-shadow:
-    0 12px 40px oklch(0.65 0.18 240 / 0.3),
-    0 0 24px oklch(0.65 0.18 240 / 0.2),
-    inset 0 1px 1px oklch(1 0 0 / 0.5);
+    0 12px 40px rgba(99, 130, 255, 0.32),
+    0 0 24px rgba(99, 130, 255, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
-/* 强毛玻璃 — 深色高不透明，用于悬浮面板，保证文字清晰可读 */
+/* 强毛玻璃 — 深色高不透明，用于需更高可读性的悬浮面板 */
 .liquid-glass-strong {
-  background: oklch(0.15 0.02 270 / 0.72);
-  backdrop-filter: blur(28px) saturate(1.8) contrast(1.05);
+  background: rgba(20, 22, 40, 0.72);
   -webkit-backdrop-filter: blur(28px) saturate(1.8) contrast(1.05);
-  border: 1px solid oklch(1 0 0 / 0.18);
+  backdrop-filter: blur(28px) saturate(1.8) contrast(1.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 16px 50px oklch(0 0 0 / 0.45),
-    inset 0 1px 1px oklch(1 0 0 / 0.3),
-    inset 0 -1px 1px oklch(0 0 0 / 0.2);
+    0 16px 50px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* 可交互玻璃按钮 — 带 active 按压效果 */
@@ -611,7 +597,7 @@ a.liquid-glass:active {
   background: linear-gradient(
     105deg,
     transparent 30%,
-    oklch(1 0 0 / 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 50%,
     transparent 70%
   );
   transform: skewX(-20deg);

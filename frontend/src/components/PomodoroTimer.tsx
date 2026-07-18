@@ -152,7 +152,7 @@ export function PomodoroTimer() {
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {/* 展开面板 */}
       {expanded && (
-        <div className="liquid-glass liquid-glass-strong mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
+        <div className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
           {!showSettings ? (
             <>
               {/* 模式切换 */}
@@ -284,7 +284,7 @@ export function PomodoroTimer() {
       {/* 悬浮触发按钮 */}
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="liquid-glass liquid-glass-strong liquid-glass-shine flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
+        className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
         style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         aria-label="番茄钟"
       >
