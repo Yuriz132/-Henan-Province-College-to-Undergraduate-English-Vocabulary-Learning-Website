@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 // 空闲多久后自动上滑隐藏（ms）
-const IDLE_HIDE_MS = 6000;
+const IDLE_HIDE_MS = 2000;
 
 export function Navbar() {
   const location = useLocation();
