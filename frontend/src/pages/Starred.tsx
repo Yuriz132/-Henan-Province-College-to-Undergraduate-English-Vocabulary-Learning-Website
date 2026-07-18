@@ -4,7 +4,7 @@ import { getWordById } from '@/lib/words-data';
 import { useStarred } from '@/hooks/use-storage';
 import { WordCard } from '@/components/WordCard';
 import { Flashcard } from '@/components/Flashcard';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FadeIn, FlyIn, Stagger } from '@/components/MotionPrimitives';
 
 export default function Starred() {
   const { starredIds, remove, clear, count } = useStarred();
@@ -31,7 +31,7 @@ export default function Starred() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <FadeIn>
+      <FlyIn>
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="mb-1 flex items-center gap-2 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
@@ -43,20 +43,20 @@ export default function Starred() {
             <div className="flex gap-2">
               <button
                 onClick={() => setFlashcardMode(true)}
-                className="liquid-glass-accent liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-4 py-2 text-sm text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+                className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-4 py-2 text-sm text-primary transition-all hover:-translate-y-0.5 active:scale-95"
               >
                 <Play className="h-4 w-4" /> 翻卡复习
               </button>
               <button
                 onClick={clear}
-                className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-destructive active:scale-95"
+                className="liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-destructive active:scale-95"
               >
                 <Trash2 className="h-4 w-4" /> 清空
               </button>
             </div>
           )}
         </div>
-      </FadeIn>
+      </FlyIn>
 
       {count === 0 ? (
         <FadeIn>
@@ -67,7 +67,7 @@ export default function Starred() {
           </div>
         </FadeIn>
       ) : (
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} childVariant="flyIn">
           {words.map((w) => (
             <WordCard key={w.id} word={w} starred onToggleStar={remove} />
           ))}

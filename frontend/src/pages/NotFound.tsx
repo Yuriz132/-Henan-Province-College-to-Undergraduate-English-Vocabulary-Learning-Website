@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { FadeIn } from "@/components/MotionPrimitives";
+import { FlyIn } from "@/components/MotionPrimitives";
 
 export function NotFoundFallback() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-4 py-20 text-center">
-      <FadeIn>
+      <FlyIn>
         <h1 className="font-bold text-gradient" style={{ fontSize: 'var(--font-size-display)' }}>
           404
         </h1>
@@ -18,7 +18,7 @@ export function NotFoundFallback() {
         >
           返回首页
         </Link>
-      </FadeIn>
+      </FlyIn>
     </div>
   );
 }

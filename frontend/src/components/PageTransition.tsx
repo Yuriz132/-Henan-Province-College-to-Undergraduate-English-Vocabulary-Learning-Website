@@ -21,6 +21,12 @@ const variants = {
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.98 },
   },
+  /** 鸿蒙7风格：右侧微缩滑入 + 弹性缓出 */
+  harmony: {
+    initial: { opacity: 0, x: 24, scale: 0.96 },
+    animate: { opacity: 1, x: 0, scale: 1 },
+    exit: { opacity: 0, x: -16, scale: 0.98 },
+  },
 };
 
 type TransitionMode = keyof typeof variants;
@@ -33,14 +39,19 @@ interface PageTransitionProps {
 /**
  * PageTransition - 页面进入/退出动画包装器
  *
- * 优化说明：
- * - 动画时长缩短至 0.2s（从 0.3s），配合 popLayout 模式更流畅
- * - 位移距离减小（y: 16 而非 24），避免大幅度跳动
- * - 使用 layout 属性确保布局变化时也有平滑过渡
+ * 支持模式：
+ *   fade        — 纯淡入淡出（默认，最快）
+ *   slide-up    — 向上滑入
+ *   slide-fade  — 侧滑+淡入
+ *   scale       — 缩放淡入
+ *   harmony     — 鸿蒙7风格：右侧微缩滑入 + 弹性缓出（推荐）
  *
  * ⚠️ 重要：此组件只包裹页面内容区域，
  * Navbar/Header/Sidebar 必须在 AnimatedRoutes 外部，不要包在 PageTransition 里。
  */
+const HARMONY_TRANSITION = { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const };
+const DEFAULT_TRANSITION = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const };
+
 export function PageTransition({ children, transition = "fade" }: PageTransitionProps) {
   const v = variants[transition];
 
@@ -49,7 +60,7 @@ export function PageTransition({ children, transition = "fade" }: PageTransition
       initial={v.initial}
       animate={v.animate}
       exit={v.exit}
-      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={transition === 'harmony' ? HARMONY_TRANSITION : DEFAULT_TRANSITION}
     >
       {children}
     </motion.div>

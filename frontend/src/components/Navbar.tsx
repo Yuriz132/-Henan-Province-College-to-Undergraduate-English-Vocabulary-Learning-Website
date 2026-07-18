@@ -15,14 +15,14 @@ const navItems = [
 ];
 
 // 空闲多久后自动上滑隐藏（ms）
-const IDLE_HIDE_MS = 3000;
+const IDLE_HIDE_MS = 6000;
 
 export function Navbar() {
   const location = useLocation();
   const [hidden, setHidden] = useState(false);
   const hideTimer = useRef<number | null>(null);
 
-  // 不滑动 / 不操作超过 3s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
+  // 不滑动 / 不操作超过 6s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
   useEffect(() => {
     const wake = () => {
       setHidden(false);

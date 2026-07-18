@@ -4,7 +4,7 @@ import { Plus, BookMarked, Pencil, Trash2, Play, Volume2, X, ChevronRight, FileT
 import { useCustomWords } from '@/hooks/use-custom-words';
 import type { CustomWord } from '@/types/word';
 import { speakWord } from '@/lib/speak';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, Stagger } from '@/components/MotionPrimitives';
 
 /** 解析批量导入文本：每行一个单词
  *  支持格式（用竖线 | 或制表符分隔，音标可省略）：
@@ -79,7 +79,7 @@ export default function CustomLibrary() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <FadeIn>
+      <FlyIn>
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
@@ -89,12 +89,12 @@ export default function CustomLibrary() {
           </div>
           <button
             onClick={() => setAdding(true)}
-            className="liquid-glass-accent liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+            className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
           >
             <Plus className="h-4 w-4" /> 新建词库
           </button>
         </div>
-      </FadeIn>
+      </FlyIn>
 
       {adding && (
         <div className="liquid-glass mb-6 flex items-center gap-2 rounded-xl p-3">
@@ -140,7 +140,7 @@ export default function CustomLibrary() {
           还没有词库，点击右上角「新建词库」开始添加你自己的单词吧～
         </p>
       ) : (
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07} childVariant="flyIn">
           {lists.map((l) => (
             <div
               key={l.id}

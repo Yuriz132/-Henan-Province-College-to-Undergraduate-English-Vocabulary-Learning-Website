@@ -4,7 +4,7 @@ import { ChevronRight, Layers, BookOpen, Play } from 'lucide-react';
 import { partStructure, getWordsByList, getListKey } from '@/lib/words-data';
 import { useStarred, useProgress } from '@/hooks/use-storage';
 import { WordCard } from '@/components/WordCard';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, Stagger } from '@/components/MotionPrimitives';
 
 export default function Browse() {
   const params = useParams();
@@ -34,7 +34,7 @@ export default function Browse() {
     if (!part) return null;
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <FadeIn>
+        <FlyIn>
           <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/browse" className="hover:text-foreground">浏览</Link>
             <ChevronRight className="h-4 w-4" />
@@ -44,8 +44,8 @@ export default function Browse() {
             {part.name}
           </h1>
           <p className="mb-6 text-muted-foreground">{part.lists.length} 个 List · {part.total} 个单词</p>
-        </FadeIn>
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        </FlyIn>
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.07} childVariant="flyIn">
           {part.lists.map((list) => {
             const listKey = getListKey(part.name, list.name);
             const prog = getListProgress(listKey);
@@ -54,7 +54,7 @@ export default function Browse() {
               <Link
                 key={list.name}
                 to={`/browse/${encodeURIComponent(part.name)}/${encodeURIComponent(list.name)}`}
-                className="liquid-glass liquid-glass-shine group p-4 transition-all hover:-translate-y-1 active:scale-[0.98]"
+                className="liquid-glass liquid-glass-shine card-bounce group p-4 transition-all hover:-translate-y-1 active:scale-[0.98]"
                 style={{ borderRadius: 'var(--radius-lg)' }}
               >
                 <div className="mb-2 flex items-center justify-between">
@@ -78,7 +78,7 @@ export default function Browse() {
   if (selectedPart && selectedList) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <FadeIn>
+        <FlyIn>
           <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/browse" className="hover:text-foreground">浏览</Link>
             <ChevronRight className="h-4 w-4" />
@@ -95,13 +95,13 @@ export default function Browse() {
             </div>
             <Link
               to={`/flashcards/${encodeURIComponent(selectedPart)}/${encodeURIComponent(selectedList)}`}
-              className="liquid-glass-accent liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+              className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
             >
               <Play className="h-4 w-4" /> 翻卡学习
             </Link>
           </div>
-        </FadeIn>
-        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        </FlyIn>
+        <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06} childVariant="flyIn">
           {currentWords.map((w) => (
             <WordCard
               key={w.id}
@@ -118,18 +118,18 @@ export default function Browse() {
   // 默认：显示 Part 列表
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <FadeIn>
+      <FlyIn>
         <h1 className="mb-2 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
           单词浏览
         </h1>
         <p className="mb-6 text-muted-foreground">选择一个 Part 开始学习</p>
-      </FadeIn>
-      <Stagger className="grid gap-3 sm:grid-cols-2">
+      </FlyIn>
+      <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.08} childVariant="flyIn">
         {partStructure.map((part) => (
           <Link
             key={part.name}
             to={`/browse/${encodeURIComponent(part.name)}`}
-            className="liquid-glass liquid-glass-shine group flex items-center justify-between p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
+            className="liquid-glass liquid-glass-shine card-bounce group flex items-center justify-between p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
             style={{ borderRadius: 'var(--radius-lg)' }}
           >
             <div>

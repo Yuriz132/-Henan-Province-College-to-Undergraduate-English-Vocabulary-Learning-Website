@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Search, Star, Layers, TrendingUp, ArrowRight } from 'lucide-react';
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, ExplodeIn, Stagger } from '@/components/MotionPrimitives';
 import { lazy, Suspense } from 'react';
 
 const SiteFeedback = lazy(() =>
@@ -42,9 +42,9 @@ export default function Index() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      {/* Hero */}
-      <FadeIn>
-        <div className="liquid-glass mb-8 overflow-hidden p-8 text-center sm:p-12"
+      {/* Hero — 开屏从中心聚拢飞入 */}
+      <ExplodeIn converge={0.3} initialScale={0.4}>
+        <div className="liquid-glass card-bounce mb-8 overflow-hidden p-8 text-center sm:p-12"
           style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <h1 className="font-bold text-gradient"
@@ -55,26 +55,26 @@ export default function Index() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to="/browse"
-              className="liquid-glass-accent liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-6 py-2.5 font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+              className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-6 py-2.5 font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
             >
               <BookOpen className="h-4 w-4" /> 开始浏览
             </Link>
             <Link
               to="/search"
-              className="liquid-glass liquid-glass-shine flex items-center gap-2 rounded-full px-6 py-2.5 text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-foreground active:scale-95"
+              className="liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-6 py-2.5 text-muted-foreground transition-all hover:-translate-y-0.5 hover:text-foreground active:scale-95"
             >
               <Search className="h-4 w-4" /> 搜索单词
             </Link>
           </div>
         </div>
-      </FadeIn>
+      </ExplodeIn>
 
-      {/* 统计 */}
-      <Stagger className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* 统计 — flyIn 增强飞入 */}
+      <Stagger className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4" stagger={0.08} childVariant="flyIn">
         {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="liquid-glass p-4" style={{ borderRadius: 'var(--radius-lg)' }}>
+            <div key={s.label} className="liquid-glass card-bounce p-4" style={{ borderRadius: 'var(--radius-lg)' }}>
               <Icon className={`mb-2 h-5 w-5 ${s.color}`} />
               <div className="text-2xl font-bold text-foreground">{s.value}</div>
               <div className="text-xs text-muted-foreground">{s.label}</div>
@@ -83,13 +83,15 @@ export default function Index() {
         })}
       </Stagger>
 
-      {/* Part 导航 */}
-      <FadeIn delay={0.1}>
+      {/* Part 导航标题 */}
+      <FlyIn delay={0.05}>
         <h2 className="mb-4 font-semibold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
           单词分组
         </h2>
-      </FadeIn>
-      <Stagger className="grid gap-3 sm:grid-cols-2">
+      </FlyIn>
+
+      {/* Part 导航卡片 — flyIn 增强飞入 */}
+      <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.07} childVariant="flyIn">
         {partStructure.map((part) => {
           const partReviewed = part.lists.reduce((sum, l) => {
             const p = progress[getListKey(part.name, l.name)];
@@ -100,7 +102,7 @@ export default function Index() {
             <Link
               key={part.name}
               to={`/browse/${encodeURIComponent(part.name)}`}
-              className="liquid-glass liquid-glass-shine group p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
+              className="liquid-glass liquid-glass-shine card-bounce group p-5 transition-all hover:-translate-y-1 active:scale-[0.98]"
               style={{ borderRadius: 'var(--radius-lg)' }}
             >
               <div className="mb-2 flex items-center justify-between">
@@ -124,23 +126,24 @@ export default function Index() {
           );
         })}
       </Stagger>
+
       {/* 学习进度备份 */}
-      <FadeIn delay={0.12}>
+      <FlyIn delay={0.1}>
         <div className="mt-8 w-full">
           <Suspense fallback={null}>
             <ProgressIO />
           </Suspense>
         </div>
-      </FadeIn>
+      </FlyIn>
 
       {/* 网站反馈与建议 */}
-      <FadeIn delay={0.15}>
+      <FlyIn delay={0.12}>
         <div className="mt-8 w-full">
           <Suspense fallback={null}>
             <SiteFeedback />
           </Suspense>
         </div>
-      </FadeIn>
+      </FlyIn>
     </div>
   );
 }

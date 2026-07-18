@@ -7,7 +7,7 @@ import { useWrongWords } from '@/hooks/use-wrong-words';
 import { useCustomWords } from '@/hooks/use-custom-words';
 import { speakWord, speakChinese } from '@/lib/speak';
 import { cn } from '@/lib/utils';
-import { FadeIn } from '@/components/MotionPrimitives';
+import { FlyIn } from '@/components/MotionPrimitives';
 
 interface QuizItem {
   word: string;
@@ -134,7 +134,7 @@ export default function Quiz() {
 
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <FadeIn>
+        <FlyIn>
           <h1 className="mb-1 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
             听写测验
           </h1>
@@ -253,7 +253,7 @@ export default function Quiz() {
           >
             <Volume2 className="h-4 w-4" /> 开始测验
           </button>
-        </FadeIn>
+        </FlyIn>
       </div>
     );
   }
@@ -264,7 +264,7 @@ export default function Quiz() {
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-        <FadeIn>
+        <FlyIn>
           <div className="liquid-glass rounded-2xl p-8 text-center">
             <div className="text-5xl font-bold text-gradient" style={{ fontSize: 'var(--font-size-display)' }}>{pct}%</div>
             <p className="mt-2 text-muted-foreground">正确 {correct} / {total}</p>
@@ -299,7 +299,7 @@ export default function Quiz() {
               </button>
             )}
           </div>
-        </FadeIn>
+        </FlyIn>
       </div>
     );
   }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import confusables from '@/assets/confusables.json';
 import type { Confusable } from '@/types/word';
 import { cn } from '@/lib/utils';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, Stagger } from '@/components/MotionPrimitives';
 
 const data = confusables as Confusable[];
 
@@ -49,13 +49,13 @@ function ConfusableCard({ item }: { item: Confusable }) {
 export default function Confusables() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <FadeIn>
+      <FlyIn>
         <h1 className="mb-1 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
           近义词 / 形近词辨析
         </h1>
         <p className="mb-6 text-muted-foreground">专升本常考的易混词，点击卡片查看区别与例句</p>
-      </FadeIn>
-      <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      </FlyIn>
+      <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08} childVariant="flyIn">
         {data.map((item, i) => (
           <ConfusableCard key={i} item={item} />
         ))}

@@ -553,6 +553,22 @@
   pointer-events: none;
 }
 
+/* ============================================================
+   通用卡片按压回弹（果冻 Q 弹）
+   交互：active 时微缩 → 释放后弹性复原
+   曲线：复用 --ease-bounce 果冻回弹曲线
+   ============================================================ */
+.card-bounce {
+  transition: transform 0.35s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+.card-bounce:active {
+  transform: scale(0.96);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-bounce { transition: none; }
+  .card-bounce:active { transform: none; }
+}
+
 /* 悬停 / 激活 — 轻微抬升亮度与阴影，不产生折射 */
 .liquid-glass:hover {
   border-color: rgba(255, 255, 255, 0.28);

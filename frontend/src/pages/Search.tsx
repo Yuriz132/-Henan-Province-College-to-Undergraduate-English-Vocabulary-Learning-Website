@@ -3,7 +3,7 @@ import { Search as SearchIcon, X } from 'lucide-react';
 import { searchWords } from '@/lib/words-data';
 import { useStarred } from '@/hooks/use-storage';
 import { WordCard } from '@/components/WordCard';
-import { FadeIn, Stagger } from '@/components/MotionPrimitives';
+import { FlyIn, Stagger } from '@/components/MotionPrimitives';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
@@ -16,16 +16,16 @@ export default function SearchPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <FadeIn>
+      <FlyIn>
         <h1 className="mb-2 font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
           搜索单词
         </h1>
         <p className="mb-6 text-muted-foreground">输入单词、音标或释义内容进行搜索</p>
-      </FadeIn>
+      </FlyIn>
 
       {/* 搜索框 */}
-      <FadeIn delay={0.05}>
-        <div className="liquid-glass mb-6 flex items-center gap-3 px-4 py-3"
+      <FlyIn delay={0.03}>
+        <div className="liquid-glass card-bounce mb-6 flex items-center gap-3 px-4 py-3"
           style={{ borderRadius: 'calc(var(--radius) + 8px)' }}
         >
           <SearchIcon className="h-5 w-5 text-muted-foreground" />
@@ -44,7 +44,7 @@ export default function SearchPage() {
             </button>
           )}
         </div>
-      </FadeIn>
+      </FlyIn>
 
       {/* 结果 */}
       {query.trim() && (
@@ -53,7 +53,7 @@ export default function SearchPage() {
         </div>
       )}
       {results.length > 0 ? (
-        <Stagger className="grid gap-3 sm:grid-cols-2">
+        <Stagger className="grid gap-3 sm:grid-cols-2" stagger={0.05} childVariant="flyIn">
           {results.map((w) => (
             <WordCard key={w.id} word={w} starred={isStarred(w.id)} onToggleStar={toggleStar} />
           ))}
