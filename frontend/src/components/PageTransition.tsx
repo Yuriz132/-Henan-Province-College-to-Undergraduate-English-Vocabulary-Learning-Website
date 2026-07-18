@@ -75,6 +75,8 @@ export function PageTransition({ children, transition = "fade" }: PageTransition
       animate={v.animate}
       exit={v.exit}
       transition={transitionConfig}
+      // 以顶部为缩放原点：整页微缩放从顶部展开，消除加载/切换时的整体上跳
+      style={{ transformOrigin: 'top center' }}
     >
       {children}
     </motion.div>

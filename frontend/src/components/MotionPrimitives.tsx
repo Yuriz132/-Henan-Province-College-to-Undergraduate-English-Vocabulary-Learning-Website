@@ -1,5 +1,5 @@
 import { motion, type Variants, type HTMLMotionProps, useReducedMotion } from 'framer-motion';
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, type CSSProperties } from 'react';
 
 // ── Shared easing & duration tokens ──
 const ease = [0.25, 0.46, 0.45, 0.94] as const;
@@ -173,11 +173,11 @@ interface ExplodeInProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 }
 
 export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
-  ({ children, delay = 0, className, initialScale = 0.5, ...props }, ref) => {
+  ({ children, delay = 0, className, initialScale = 0.5, style, ...props }, ref) => {
     const prefersReduced = useReducedMotion();
 
     if (prefersReduced) {
-      return <div ref={ref} className={className} {...(props as Record<string, unknown>)}>{children}</div>;
+      return <div ref={ref} className={className} style={style as CSSProperties} {...(props as Record<string, unknown>)}>{children}</div>;
     }
 
     return (
@@ -187,6 +187,8 @@ export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
         animate={{ opacity: 1, scale: 1 }}
         transition={{ ...explodeSpring, delay: delay || undefined }}
         className={className}
+        // 以顶部为缩放原点：缩放时从顶部向下展开，避免"从中间蹦到顶端"的视觉跳变
+        style={{ transformOrigin: 'top center', ...style }}
         {...props}
       >
         {children}
