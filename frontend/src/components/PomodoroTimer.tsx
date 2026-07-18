@@ -42,6 +42,20 @@ const MODE_COLOR: Record<Mode, string> = {
   long: 'oklch(0.6 0.22 340)',
 };
 
+/**
+ * 计时结束震动反馈：震 1000ms → 停 400ms → 震 1000ms → 停 400ms → 震 1000ms。
+ * 仅支持的移动设备生效；桌面端 navigator.vibrate 不存在或返回 false，静默忽略。
+ */
+function vibrateOnComplete() {
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate([1000, 400, 1000, 400, 1000]);
+    }
+  } catch {
+    /* 不支持震动的设备忽略 */
+  }
+}
+
 export function PomodoroTimer() {
   const initial = useRef(loadState());
   const [settings, setSettings] = useState<PomodoroSettings>(initial.current.settings);
@@ -109,6 +123,8 @@ export function PomodoroTimer() {
     } catch {
       /* ignore */
     }
+    // 震动反馈：专注/休息任一计时结束都触发
+    vibrateOnComplete();
   }, [mode, cycleCount, switchMode]);
 
   // 始终调用最新版本的完成逻辑（自动计时下 interval 不重建，避免闭包过期）
