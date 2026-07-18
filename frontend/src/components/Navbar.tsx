@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,14 +14,39 @@ const navItems = [
   { to: '/starred', label: '生词本', icon: Star },
 ];
 
+// 空闲多久后自动上滑隐藏（ms）
+const IDLE_HIDE_MS = 3000;
+
 export function Navbar() {
   const location = useLocation();
+  const [hidden, setHidden] = useState(false);
+  const hideTimer = useRef<number | null>(null);
+
+  // 不滑动 / 不操作超过 3s → 顶栏上滑隐藏；任意操作 → 立即弹出并重置计时
+  useEffect(() => {
+    const wake = () => {
+      setHidden(false);
+      if (hideTimer.current) window.clearTimeout(hideTimer.current);
+      hideTimer.current = window.setTimeout(() => setHidden(true), IDLE_HIDE_MS);
+    };
+    wake(); // 启动首次计时
+
+    const events = ['scroll', 'mousemove', 'touchstart', 'touchmove', 'pointerdown', 'click', 'keydown', 'wheel'];
+    events.forEach((e) => window.addEventListener(e, wake, { passive: true }));
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, wake));
+      if (hideTimer.current) window.clearTimeout(hideTimer.current);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full">
       <LiquidGlass
         as="div"
-        className="liquid-glass mx-auto mt-3 flex max-w-5xl items-center justify-center gap-1 px-4 py-2.5 sm:px-6"
+        className={cn(
+          'liquid-glass lg-imm-bar mx-auto mt-3 flex max-w-5xl items-center justify-center gap-1 px-4 py-2.5 sm:px-6',
+          hidden ? 'lg-imm-hidden' : 'lg-imm-visible'
+        )}
         style={{ borderRadius: 'calc(var(--radius) + 8px)' }}
       >
         <nav className="flex items-center gap-1">
