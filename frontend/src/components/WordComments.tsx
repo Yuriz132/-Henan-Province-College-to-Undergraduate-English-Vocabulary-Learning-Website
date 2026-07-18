@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { MessageCircle, Send, Loader2 } from 'lucide-react';
-import { fetchComments, addComment, isAnonymousReady, type Comment } from '@/lib/cloudbase';
+import { fetchComments, addComment, type Comment } from '@/lib/comments';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface WordCommentsProps {
@@ -39,6 +41,7 @@ export function WordComments({
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthed } = useAuth();
 
   const headerTitle = title ?? '大家的灵光一现';
   const headerSubtitle = subtitle ?? (wordText ? `关于 “${wordText}” 的短语 / 近义词 / 记忆口诀` : '');
@@ -66,10 +69,6 @@ export function WordComments({
   const submit = async () => {
     const value = text.trim();
     if (!value || posting) return;
-    if (!isAnonymousReady()) {
-      setError('评论服务未就绪，请刷新页面后重试');
-      return;
-    }
     setPosting(true);
     setError(null);
     try {
@@ -121,32 +120,41 @@ export function WordComments({
 
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
-      {/* 输入区 */}
-      <div className="mt-3 flex items-center gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit();
-          }}
-          maxLength={200}
-          placeholder={inputPlaceholder}
-          className="liquid-glass h-10 flex-1 rounded-xl bg-white/5 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary/50"
-        />
-        <button
-          onClick={submit}
-          disabled={posting || !text.trim()}
-          className={cn(
-            'liquid-glass liquid-glass-shine flex h-10 items-center gap-1.5 rounded-xl px-4 text-sm transition-all active:scale-95',
-            text.trim() && !posting
-              ? 'text-primary hover:text-foreground'
-              : 'cursor-not-allowed text-muted-foreground/40'
-          )}
-        >
-          {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          发送
-        </button>
-      </div>
+      {/* 输入区：仅登录用户可发表 */}
+      {isAuthed ? (
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit();
+            }}
+            maxLength={200}
+            placeholder={inputPlaceholder}
+            className="liquid-glass h-10 flex-1 rounded-xl bg-white/5 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary/50"
+          />
+          <button
+            onClick={submit}
+            disabled={posting || !text.trim()}
+            className={cn(
+              'liquid-glass liquid-glass-shine flex h-10 items-center gap-1.5 rounded-xl px-4 text-sm transition-all active:scale-95',
+              text.trim() && !posting
+                ? 'text-primary hover:text-foreground'
+                : 'cursor-not-allowed text-muted-foreground/40'
+            )}
+          >
+            {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            发送
+          </button>
+        </div>
+      ) : (
+        <p className="mt-3 text-center text-xs text-muted-foreground/70">
+          登录后即可发表评论 ·{' '}
+          <Link to="/login" className="text-primary hover:underline">
+            去登录
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

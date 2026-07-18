@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler'
 import { httpLogger } from './middleware/logger'
 import { systemRouter } from './modules/system'
 import { authRouter } from './modules/auth'
+import { commentsRouter } from './modules/comments'
 // ============================================
 // Add your domain module imports here
 // ============================================
@@ -36,6 +37,9 @@ export const createApp = (): Application => {
 
   // 账户 + 云端学习进度
   app.use(env.API_PREFIX, authRouter)
+
+  // 评论（仅登录可发表，读取公开）
+  app.use(env.API_PREFIX, commentsRouter)
 
   // ============================================
   // Add your domain module routes here
