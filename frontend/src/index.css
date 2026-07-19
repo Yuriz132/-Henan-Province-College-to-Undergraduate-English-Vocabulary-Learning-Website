@@ -517,8 +517,12 @@
   border-radius: var(--radius-lg);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.28),
+    /* 上边缘白色倒影 */
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.18),
+    /* 下边缘白色倒影（与上边缘对称，向内折射） */
+    inset 0 -1px 1px rgba(255, 255, 255, 0.22),
+    /* 下边缘柔暗带，维持底部立体感（位于白线内侧） */
+    inset 0 -5px 10px rgba(0, 0, 0, 0.16),
     inset 1px 0 1px rgba(255, 255, 255, 0.12),
     inset -1px 0 1px rgba(0, 0, 0, 0.12);
   overflow: hidden;
@@ -709,7 +713,8 @@
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.32),
     inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.18),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.16),
     inset 1px 0 1px rgba(255, 255, 255, 0.16),
     inset -1px 0 1px rgba(0, 0, 0, 0.12);
 }
@@ -722,7 +727,8 @@
     0 8px 32px rgba(99, 130, 255, 0.25),
     0 0 16px rgba(99, 130, 255, 0.18),
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.12);
+    inset 0 -1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .liquid-glass-accent:hover {
@@ -731,7 +737,8 @@
   box-shadow:
     0 12px 40px rgba(99, 130, 255, 0.32),
     0 0 24px rgba(99, 130, 255, 0.22),
-    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.3);
 }
 
 /* 强毛玻璃 — 深色高不透明，用于需更高可读性的悬浮面板 */
@@ -743,7 +750,17 @@
   box-shadow:
     0 16px 50px rgba(0, 0, 0, 0.45),
     inset 0 1px 1px rgba(255, 255, 255, 0.3),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -4px 9px rgba(0, 0, 0, 0.2);
+}
+
+/* AI 助手展开悬浮窗：上下边缘对称白色倒影（不依赖 .liquid-glass） */
+.ai-fab-panel {
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.22);
 }
 
 /* 可交互玻璃按钮 — 带 active 按压效果 */

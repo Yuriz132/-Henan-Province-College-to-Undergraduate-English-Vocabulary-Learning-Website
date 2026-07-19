@@ -22,7 +22,7 @@ export interface StudyPlan {
 }
 
 export const PLAN_TYPE_LABEL: Record<PlanType, string> = {
-  units: '完成单元',
+  units: '完成章节',
   words: '单词目标',
   custom: '自定义任务',
 }

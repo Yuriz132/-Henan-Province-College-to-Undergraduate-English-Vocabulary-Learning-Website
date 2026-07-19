@@ -29,11 +29,36 @@ async function loadUsers(): Promise<any[]> {
     return JSON.parse(raw) as any[]
   } catch { return [] }
 }
+let dailyCache: DailyFile | null = null
 async function loadDaily(): Promise<DailyFile> {
+  if (dailyCache) return dailyCache
   try {
     const raw = await fs.readFile(DAILY_FILE, 'utf-8')
-    return JSON.parse(raw) as DailyFile
-  } catch { return {} }
+    dailyCache = JSON.parse(raw) as DailyFile
+  } catch {
+    dailyCache = {}
+  }
+  return dailyCache
+}
+async function saveDaily(d: DailyFile): Promise<void> {
+  dailyCache = d
+  await fs.mkdir(DATA_DIR, { recursive: true })
+  await fs.writeFile(DAILY_FILE, JSON.stringify(d, null, 2), 'utf-8')
+}
+
+/**
+ * 记录某用户当日学习增量（新增掌握词数），供排行榜「今日/本周」统计。
+ * 在 PUT /progress 合并 known 后调用；count<=0 时忽略（不计退步/删除）。
+ * 日期口径与 GET /leaderboard 的 todayStr() 保持一致（UTC，避免读写错位）。
+ */
+export async function recordLearningActivity(username: string, count: number): Promise<void> {
+  if (!username || count <= 0) return
+  const daily = await loadDaily()
+  const t = todayStr()
+  if (!daily[username]) daily[username] = {}
+  const cur = daily[username][t] || { reviewed: 0, timestamp: 0 }
+  daily[username][t] = { reviewed: cur.reviewed + count, timestamp: Date.now() }
+  await saveDaily(daily)
 }
 
 function todayStr(): string {

@@ -103,7 +103,7 @@ export function AIChatFAB() {
       {/* 聊天面板 — 右下角弹出 */}
       {open && (
         <div
-          className="fixed bottom-24 right-6 z-[200] flex h-[400px] w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
+          className="fixed bottom-24 right-6 z-[200] flex h-[400px] w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] ai-fab-panel backdrop-blur-xl"
           style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">

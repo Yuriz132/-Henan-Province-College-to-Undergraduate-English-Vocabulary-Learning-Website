@@ -56,19 +56,23 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState(45);
   const [tasks, setTasks] = useState<{ id: string; text: string }[]>([EMPTY_TASK()]);
-  // 单元选择状态：展开的 part 名集合 + 已选的 listKey 集合
+  // 章节选择状态：展开的 part 名集合 + 已选的 listKey 集合
   const [expandedParts, setExpandedParts] = useState<Set<string>>(new Set());
   const [selectedListKeys, setSelectedListKeys] = useState<Set<string>>(new Set());
 
-  // 每次打开弹窗重置表单
+  // 每次打开弹窗重置表单，并默认选中 Part One::List 1（第一章）
   useEffect(() => {
     if (open) {
       setType('units');
       setTitle('');
       setTarget(45);
       setTasks([EMPTY_TASK()]);
-      setExpandedParts(new Set());
-      setSelectedListKeys(new Set());
+
+      const defaultPart = 'Part One';
+      const defaultList = 'List 1';
+      const defaultKey = getListKey(defaultPart, defaultList);
+      setExpandedParts(new Set([defaultPart]));
+      setSelectedListKeys(new Set([defaultKey]));
     }
   }, [open]);
 
@@ -149,7 +153,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
             <Target className="h-4 w-4 text-primary" />
             <span>学习计划</span>
             <span className="text-xs text-muted-foreground/70">
-              选单元·设目标·追踪进度（登录后保存在云端）
+              选章节·设目标·追踪进度（登录后保存在云端）
             </span>
           </div>
           <button
@@ -171,10 +175,10 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
               const pct = plan.target > 0 ? Math.min(100, Math.round((current / plan.target) * 100)) : 0;
               const done = current >= plan.target;
 
-              // units 类型显示已选单元详情
+              // units 类型显示已选章节详情
               const unitDetail =
                 plan.type === 'units' && plan.selectedLists
-                  ? ` (${plan.selectedLists.length} 个单元)`
+                  ? ` (${plan.selectedLists.length} 章)`
                   : '';
 
               return (
@@ -235,7 +239,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
                     </ul>
                   )}
 
-                  {/* 单元类型：展示已选单元列表 */}
+                  {/* 章节类型：展示已选章节列表 */}
                   {plan.type === 'units' && plan.selectedLists && plan.selectedLists.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1">
                       {plan.selectedLists.slice(0, 6).map((lk) => {
@@ -274,21 +278,21 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>制定学习计划</DialogTitle>
-            <DialogDescription>选择题库单元、设定单词目标或自定义任务，进度自动跟踪。</DialogDescription>
+            <DialogDescription>选择题库章节、设定单词目标或自定义任务，进度自动跟踪。</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <Tabs value={type} onValueChange={(v) => setType(v as PlanType)}>
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="units">完成单元</TabsTrigger>
+                <TabsTrigger value="units">完成章节</TabsTrigger>
                 <TabsTrigger value="words">单词目标</TabsTrigger>
                 <TabsTrigger value="custom">自定义</TabsTrigger>
               </TabsList>
 
-              {/* Tab 1：选择词库单元（List 级别） */}
+              {/* Tab 1：选择词库章节（每个 List 即一章） */}
               <TabsContent value="units" className="space-y-2 pt-3">
                 <p className="mb-2 text-xs text-muted-foreground">
-                  从下方勾选要完成的单元（共 {partStructure.length} 个大模块、{partStructure.reduce((s, p) => s + p.lists.length, 0)} 个小节）。已选 <strong className="text-foreground">{selectedCount}</strong> 个。
+                  每章对应一个 List，完成任意一章进度 +1。已选 <strong className="text-foreground">{selectedCount}</strong> 章。
                 </p>
                 <div className="max-h-60 space-y-1 overflow-y-auto rounded-xl bg-white/[0.03] p-2">
                   {partStructure.map((part) => {
@@ -352,7 +356,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
                 </div>
                 {selectedCount > 0 && (
                   <p className="text-center text-xs text-primary">
-                    已选 {selectedCount} 个单元，将作为你的学习目标
+                    已选 {selectedCount} 章，每完成一章计划进度 +1
                   </p>
                 )}
               </TabsContent>

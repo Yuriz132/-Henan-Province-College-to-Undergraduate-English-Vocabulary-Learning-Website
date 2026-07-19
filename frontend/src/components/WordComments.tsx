@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, MessageCircle, Send, Loader2 } from 'lucide-react';
-import { fetchComments, addComment, deleteComment, type Comment } from '@/lib/comments';
+import { Trash2, MessageCircle, Send, Loader2, EyeOff, Eye } from 'lucide-react';
+import { fetchComments, addComment, deleteComment, unhideComment, type Comment } from '@/lib/comments';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -72,6 +72,7 @@ export function WordComments({
     setPosting(true);
     setError(null);
     try {
+      // AI 审核在后端异步进行，发表立即成功并展示，命中违规后仅管理员侧可见
       await addComment(wordId, value);
       setText('');
       await load();
@@ -80,6 +81,15 @@ export function WordComments({
       setError('发送失败，请稍后重试');
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleUnhide = async (id: string) => {
+    try {
+      const updated = await unhideComment(id);
+      setComments((prev) => prev.map((c) => (c._id === id ? { ...c, ...updated } : c)));
+    } catch {
+      alert('取消隐藏失败，请确认管理员权限');
     }
   };
 
@@ -115,23 +125,51 @@ export function WordComments({
           comments.map((c) => (
             <div
               key={c._id}
-              className="flex items-start gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-foreground/90"
+              className={cn(
+                'flex items-start gap-2 rounded-xl px-3 py-2 text-sm',
+                c.hidden
+                  ? 'border border-destructive/40 bg-destructive/10 text-foreground/70'
+                  : 'bg-white/5 text-foreground/90'
+              )}
             >
               <div className="min-w-0 flex-1">
-                <p className="leading-relaxed break-words">{c.text}</p>
+                {c.hidden && (
+                  <div className="mb-1 flex items-center gap-1 text-[11px] font-medium text-destructive">
+                    <EyeOff className="h-3 w-3" />
+                    <span>已隐藏（疑似违规）</span>
+                    {c.flagReason && (
+                      <span className="text-destructive/70">· {c.flagReason}</span>
+                    )}
+                  </div>
+                )}
+                <p className={cn('leading-relaxed break-words', c.hidden && 'line-through decoration-destructive/50')}>
+                  {c.text}
+                </p>
                 <p className="mt-1 text-[11px] text-muted-foreground/60">
                   {c.author} · {timeAgo(c.createdAt)}
                 </p>
               </div>
-              {(isAdmin || c.author === user) && (
-                <button
-                  onClick={() => handleDelete(c._id)}
-                  className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-destructive"
-                  title={isAdmin && c.author !== user ? '删除评论（管理员）' : '删除我的评论'}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
+              <div className="flex shrink-0 items-center gap-0.5">
+                {/* 管理员可取消隐藏被 AI 标记的评论 */}
+                {isAdmin && c.hidden && (
+                  <button
+                    onClick={() => handleUnhide(c._id)}
+                    className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-primary"
+                    title="取消隐藏（管理员）"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {(isAdmin || c.author === user) && (
+                  <button
+                    onClick={() => handleDelete(c._id)}
+                    className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-destructive"
+                    title={isAdmin && c.author !== user ? '删除评论（管理员）' : '删除我的评论'}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}

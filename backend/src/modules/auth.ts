@@ -3,6 +3,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'crypto'
 import { promises as fs } from 'fs'
 import path from 'path'
 import { z } from 'zod'
+import { recordLearningActivity } from './leaderboard'
 
 // ============================================
 // 账户 + 云端学习进度模块
@@ -35,7 +36,7 @@ interface ProgressData {
   plans: StudyPlan[]
 }
 
-interface User {
+export interface User {
   username: string
   salt: string
   passwordHash: string
@@ -51,7 +52,7 @@ const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, pla
 // ---------- 文件读写（带缓存，减少磁盘 IO）----------
 let usersCache: User[] | null = null
 
-async function loadUsers(): Promise<User[]> {
+export async function loadUsers(): Promise<User[]> {
   if (usersCache) return usersCache
   try {
     const raw = await fs.readFile(USERS_FILE, 'utf-8')
@@ -257,16 +258,20 @@ authRouter.put('/progress', authMiddleware, async (req: Request, res: Response) 
   }
   const user = (req as AuthedRequest).user as User
   const incoming = parsed.data
+  const prevKnownLen = (user.progress.known || []).length
   const next: ProgressData = {
     starred: incoming.starred ?? user.progress.starred,
     known: incoming.known ?? user.progress.known,
     progress: incoming.progress ?? user.progress.progress,
     plans: incoming.plans ?? user.progress.plans,
   }
+  const knownDelta = Math.max(0, (next.known || []).length - prevKnownLen)
   user.progress = next
   const users = await loadUsers()
   const idx = users.findIndex((u) => u.username === user.username)
   if (idx >= 0) users[idx] = user
   await saveUsers(users)
+  // 记录当日新增掌握词数，驱动排行榜「今日 / 本周」
+  if (knownDelta > 0) await recordLearningActivity(user.username, knownDelta)
   return res.json(user.progress)
 })
