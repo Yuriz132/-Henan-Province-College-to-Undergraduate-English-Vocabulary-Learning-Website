@@ -141,7 +141,7 @@ export async function aiExplainWord(word: string, meaning: string): Promise<Word
   const text = await aiChat([
     { role: 'system', content: sys },
     { role: 'user', content: `单词：${word}\n中文释义参考：${meaning || '无'}\n请输出 JSON。` }
-  ], { model: 'agnes-2.0-flash', max_tokens: 1000, temperature: 0.3 });
+  ], { model: 'agnes-1.5-flash', max_tokens: 800, temperature: 0.3 });
   try {
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return EMPTY_DETAIL;
