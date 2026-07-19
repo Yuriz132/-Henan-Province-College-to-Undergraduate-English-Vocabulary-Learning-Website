@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, LogOut, Shield, AlertCircle } from 'lucide-react';
+import { User, Lock, LogOut, Shield, AlertCircle, UploadCloud, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiChangePassword } from '@/lib/authApi';
 import { FlyIn } from '@/components/MotionPrimitives';
 
 export default function Account() {
-  const { user, isAuthed, isAdmin, logout } = useAuth();
+  const { user, isAuthed, isAdmin, logout, importLocalToCloud } = useAuth();
   const navigate = useNavigate();
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [changing, setChanging] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
 
   const handleChangePassword = async () => {
     setMsg(null);
@@ -31,6 +33,21 @@ export default function Account() {
       setMsg({ type: 'error', text });
     } finally {
       setChanging(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (importing) return;
+    setImporting(true);
+    setImportMsg('导入中…');
+    try {
+      await importLocalToCloud();
+      setImportMsg('已导入到云端');
+    } catch {
+      setImportMsg('导入失败，请重试');
+    } finally {
+      setImporting(false);
+      setTimeout(() => setImportMsg(''), 1800);
     }
   };
 
@@ -98,6 +115,20 @@ export default function Account() {
             </button>
           </div>
         </div>
+
+        {/* 导入本地进度 */}
+        <button
+          onClick={handleImport}
+          disabled={importing}
+          className="liquid-glass liquid-glass-shine mb-3 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm text-primary transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-60"
+        >
+          <UploadCloud className="h-4 w-4" /> {importing ? '导入中…' : '导入本地进度到云端'}
+        </button>
+        {importMsg && (
+          <p className="mb-3 flex items-center justify-center gap-1 text-xs text-primary">
+            <Check className="h-3 w-3" /> {importMsg}
+          </p>
+        )}
 
         {/* 退出登录 */}
         <button

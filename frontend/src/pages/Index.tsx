@@ -81,7 +81,7 @@ export default function Index() {
           >
             升本词汇
           </h1>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-3 max-w-md mx-auto">
             <Link
               to="/browse"
               className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-6 py-2.5 font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
@@ -115,8 +115,6 @@ export default function Index() {
         <p className="mb-6 flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
           <Users className="h-3.5 w-3.5" />
           当前已有 <span className="font-medium text-foreground/80">{totalUsers}</span> 位同学在学
-          <span className="mx-1">·</span>
-          收录 <span className="font-medium text-foreground/80">{allWords.length.toLocaleString()}</span> 个专升本核心词汇
         </p>
       </FlyIn>
 
