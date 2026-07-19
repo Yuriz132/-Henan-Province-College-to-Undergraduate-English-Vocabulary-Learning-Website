@@ -131,7 +131,7 @@ export function AIChatFAB() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown}
-        className="fixed z-[100] flex h-12 w-12 items-center justify-center rounded-full bg-primary/90 shadow-lg shadow-primary/40 text-white transition-all active:scale-95"
+        className="liquid-glass liquid-glass-shine fixed z-[250] flex h-12 w-12 items-center justify-center rounded-full text-primary transition-all active:scale-95"
         style={{ left: pos.x, top: pos.y }}
         aria-label="AI 学习助手"
       >
