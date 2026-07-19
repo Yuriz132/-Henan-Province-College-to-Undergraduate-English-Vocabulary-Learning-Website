@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { apiLogin, apiRegister, apiGetProgress, apiSaveProgress, type CloudProgress } from '@/lib/authApi'
+import { apiLogin, apiRegister, apiGetProgress, apiSaveProgress, type CloudProgress, type SavedArticle } from '@/lib/authApi'
 import { setCloudUploader } from '@/lib/progressSync'
 import type { StudyPlan } from '@/lib/studyPlans'
 
@@ -11,6 +11,7 @@ const STARRED_KEY = 'liquid-words:starred'
 const KNOWN_KEY = 'liquid-words:known'
 const PROGRESS_KEY = 'liquid-words:progress'
 const PLANS_KEY = 'liquid-words:plans'
+const SAVED_ARTICLES_KEY = 'liquid-words:saved-articles'
 
 function readPlans(): StudyPlan[] {
   try {
@@ -55,6 +56,24 @@ function readProgress(): ProgressMap {
 function writeProgress(v: ProgressMap) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(v))
 }
+function readSavedArticles(): SavedArticle[] {
+  try {
+    const raw = localStorage.getItem(SAVED_ARTICLES_KEY)
+    return raw ? (JSON.parse(raw) as SavedArticle[]) : []
+  } catch {
+    return []
+  }
+}
+function writeSavedArticles(v: SavedArticle[]) {
+  localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(v))
+}
+/** 已生成文章：按 id 去重，最新在前 */
+function mergeSavedArticles(local: SavedArticle[], cloud: SavedArticle[]): SavedArticle[] {
+  const map = new Map<string, SavedArticle>()
+  for (const a of local) map.set(a.id, a)
+  for (const a of cloud) map.set(a.id, a)
+  return Array.from(map.values()).sort((a, b) => b.createdAt - a.createdAt)
+}
 
 /** 云端进度合并回本地：集合取并集，进度按列表取最大值（不丢数据） */
 function mergeCloudIntoLocal(cloud: CloudProgress) {
@@ -71,6 +90,7 @@ function mergeCloudIntoLocal(cloud: CloudProgress) {
   writeArr(KNOWN_KEY, known)
   writeProgress(merged)
   writePlans(mergePlansById(readPlans(), cloud.plans ?? []))
+  writeSavedArticles(mergeSavedArticles(readSavedArticles(), cloud.savedArticles ?? []))
 }
 
 function localSnapshot(): CloudProgress {
@@ -79,6 +99,7 @@ function localSnapshot(): CloudProgress {
     known: readArr(KNOWN_KEY),
     progress: readProgress(),
     plans: readPlans(),
+    savedArticles: readSavedArticles(),
   }
 }
 

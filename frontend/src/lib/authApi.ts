@@ -1,11 +1,23 @@
 import apiClient from './api-client';
 import type { StudyPlan } from '@/lib/studyPlans';
 
+/** 生成的 AI 文章（存入「我的题库」） */
+export interface SavedArticle {
+  id: string
+  title: string
+  content: string
+  usedWords: string[]
+  target: number
+  theme: string
+  createdAt: number
+}
+
 export interface CloudProgress {
   starred?: number[]
   known?: number[]
   progress?: Record<string, { reviewed: number; total: number }>
   plans?: StudyPlan[]
+  savedArticles?: SavedArticle[]
 }
 
 export interface AuthResult {

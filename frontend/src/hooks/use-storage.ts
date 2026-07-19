@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { pushToCloud } from '@/lib/progressSync';
 import type { StudyPlan } from '@/lib/studyPlans';
+import type { SavedArticle } from '@/lib/authApi';
 
 const STARRED_KEY = 'liquid-words:starred';
 const PROGRESS_KEY = 'liquid-words:progress';
 const KNOWN_KEY = 'liquid-words:known';
+const SAVED_ARTICLES_KEY = 'liquid-words:saved-articles';
 
 function readSet(key: string): Set<number> {
   try {
@@ -170,4 +172,49 @@ export function useStudyPlans() {
   );
 
   return { plans, addPlan, removePlan, toggleTask };
+}
+
+/** 已生成文章（我的题库）：本地存储 + 登录后同步到云端 */
+function readSavedArticles(): SavedArticle[] {
+  try {
+    const raw = localStorage.getItem(SAVED_ARTICLES_KEY);
+    return raw ? (JSON.parse(raw) as SavedArticle[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedArticles(list: SavedArticle[]) {
+  localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(list));
+  pushToCloud({ savedArticles: list });
+}
+
+export function useSavedArticles() {
+  const [articles, setArticles] = useState<SavedArticle[]>(() => readSavedArticles());
+
+  /** 新增一篇文章（自动去重 + 最新在前），并同步到云端 */
+  const add = useCallback((article: SavedArticle) => {
+    setArticles((prev) => {
+      const existed = prev.some((a) => a.id === article.id);
+      const next = existed ? prev.map((a) => (a.id === article.id ? article : a)) : [article, ...prev];
+      next.sort((a, b) => b.createdAt - a.createdAt);
+      writeSavedArticles(next);
+      return next;
+    });
+  }, []);
+
+  const remove = useCallback((id: string) => {
+    setArticles((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      writeSavedArticles(next);
+      return next;
+    });
+  }, []);
+
+  const clear = useCallback(() => {
+    setArticles([]);
+    writeSavedArticles([]);
+  }, []);
+
+  return { articles, add, remove, clear, count: articles.length };
 }

@@ -2,12 +2,14 @@
 // 已登录时由 AuthProvider 注册真正的上传函数；未登录时为 null，pushToCloud 静默跳过（仅本地）。
 
 import type { StudyPlan } from '@/lib/studyPlans';
+import type { SavedArticle } from '@/lib/authApi';
 
 export type ProgressSlice =
   | { starred: number[] }
   | { known: number[] }
   | { progress: Record<string, { reviewed: number; total: number }> }
   | { plans: StudyPlan[] }
+  | { savedArticles: SavedArticle[] }
 
 type Uploader = (slice: ProgressSlice) => Promise<void>
 

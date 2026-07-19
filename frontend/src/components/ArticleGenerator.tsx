@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Loader2, X, BookOpen, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, X, BookOpen, FileText, Check } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { aiGenerateArticle } from '@/lib/ai';
 import { allWords } from '@/lib/words-data';
-import { useKnown, useStarred } from '@/hooks/use-storage';
+import { useKnown, useStarred, useSavedArticles } from '@/hooks/use-storage';
+import type { SavedArticle } from '@/lib/authApi';
 
 interface Props {
   open: boolean;
@@ -23,15 +25,25 @@ const TARGETS = [
   { value: 200, label: '长文 ~200词', desc: '综合运用' },
 ] as const
 
+/** 生成稳定的文章 id（优先用 crypto.randomUUID） */
+function makeArticleId(): string {
+  const c: any = (globalThis as any).crypto
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID()
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 /** AI 英语文章生成：基于已学（已掌握/已收藏）单词生成可读文章 */
 export function ArticleGenerator({ open, onOpenChange }: Props) {
   const { known } = useKnown()
   const { starred } = useStarred()
+  const { add: saveArticle } = useSavedArticles()
+  const navigate = useNavigate()
   const [target, setTarget] = useState<number>(120)
   const [theme, setTheme] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ title: string; content: string; usedWords: string[] } | null>(null)
   const [err, setErr] = useState('')
+  const [savedId, setSavedId] = useState<string | null>(null)
 
   // 收集「已学」单词的 word 字段
   const learnedWords = useMemo(() => {
@@ -59,6 +71,7 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
     setLoading(true)
     setErr('')
     setResult(null)
+    setSavedId(null)
     try {
       const out = await aiGenerateArticle({
         learnedWords,
@@ -66,6 +79,18 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
         title: theme.trim() || undefined,
       })
       setResult(out)
+      // 自动存入「我的题库」（本地 + 已登录时同步云端）
+      const article: SavedArticle = {
+        id: makeArticleId(),
+        title: out.title || 'Untitled',
+        content: out.content,
+        usedWords: out.usedWords || [],
+        target,
+        theme: theme.trim() || '无主题',
+        createdAt: Date.now(),
+      }
+      saveArticle(article)
+      setSavedId(article.id)
     } catch (e: any) {
       setErr(e?.response?.data?.message || e?.message || '生成失败，请重试')
     } finally {
@@ -136,7 +161,14 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
           {result && (
             <div className="space-y-3">
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <h3 className="mb-2 text-base font-bold text-foreground">{result.title}</h3>
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <h3 className="text-base font-bold text-foreground">{result.title}</h3>
+                  {savedId && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                      <Check className="h-3 w-3" /> 已存入题库
+                    </span>
+                  )}
+                </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                   {result.content}
                 </p>
@@ -158,6 +190,16 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
               <div className="flex gap-2">
                 <Button onClick={generate} variant="outline" disabled={loading} className="flex-1">
                   <BookOpen className="h-4 w-4" /> 再生成一篇
+                </Button>
+                <Button
+                  onClick={() => {
+                    onOpenChange(false)
+                    navigate('/starred?tab=articles')
+                  }}
+                  variant="ghost"
+                  className="text-primary"
+                >
+                  <FileText className="h-4 w-4" /> 我的题库
                 </Button>
                 <Button onClick={() => onOpenChange(false)} variant="ghost">
                   <X className="h-4 w-4" /> 关闭

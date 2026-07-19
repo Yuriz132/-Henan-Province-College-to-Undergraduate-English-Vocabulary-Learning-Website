@@ -29,11 +29,22 @@ export interface StudyPlan {
   createdAt: number
 }
 
+export interface SavedArticle {
+  id: string
+  title: string
+  content: string
+  usedWords: string[]
+  target: number
+  theme: string
+  createdAt: number
+}
+
 interface ProgressData {
   starred: number[]
   known: number[]
   progress: Record<string, { reviewed: number; total: number }>
   plans: StudyPlan[]
+  savedArticles?: SavedArticle[]
 }
 
 export interface User {
@@ -47,7 +58,15 @@ export interface User {
 
 type AuthedRequest = Request & { user?: User }
 
-const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, plans: [] }
+const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, plans: [], savedArticles: [] }
+
+/** 合并已生成文章：按 id 去重，云端优先（incoming 覆盖同 id 的已有项），最新在前 */
+function mergeSavedArticles(existing: SavedArticle[], incoming: SavedArticle[]): SavedArticle[] {
+  const map = new Map<string, SavedArticle>()
+  for (const a of existing) map.set(a.id, a)
+  for (const a of incoming) map.set(a.id, a)
+  return Array.from(map.values()).sort((a, b) => b.createdAt - a.createdAt)
+}
 
 // ---------- 文件读写（带缓存，减少磁盘 IO）----------
 let usersCache: User[] | null = null
@@ -147,6 +166,16 @@ const planSchema = z.object({
   createdAt: z.number(),
 })
 
+const savedArticleSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  usedWords: z.array(z.string()),
+  target: z.number(),
+  theme: z.string(),
+  createdAt: z.number(),
+})
+
 const progressSchema = z
   .object({
     starred: z.array(z.number().int()).optional(),
@@ -155,15 +184,17 @@ const progressSchema = z
       .record(z.string(), z.object({ reviewed: z.number().int(), total: z.number().int() }))
       .optional(),
     plans: z.array(planSchema).optional(),
+    savedArticles: z.array(savedArticleSchema).optional(),
   })
   .refine(
     (d) =>
       d.starred !== undefined ||
       d.known !== undefined ||
       d.progress !== undefined ||
-      d.plans !== undefined,
+      d.plans !== undefined ||
+      d.savedArticles !== undefined,
     {
-      message: '至少提供 starred / known / progress / plans 中的一项',
+      message: '至少提供 starred / known / progress / plans / savedArticles 中的一项',
     }
   )
 
@@ -259,11 +290,17 @@ authRouter.put('/progress', authMiddleware, async (req: Request, res: Response) 
   const user = (req as AuthedRequest).user as User
   const incoming = parsed.data
   const prevKnownLen = (user.progress.known || []).length
+  // 已生成文章：增量合并（按 id 去重），未提供则保留原值
+  const prevArticles = user.progress.savedArticles || []
+  const mergedArticles = incoming.savedArticles
+    ? mergeSavedArticles(prevArticles, incoming.savedArticles)
+    : prevArticles
   const next: ProgressData = {
     starred: incoming.starred ?? user.progress.starred,
     known: incoming.known ?? user.progress.known,
     progress: incoming.progress ?? user.progress.progress,
     plans: incoming.plans ?? user.progress.plans,
+    savedArticles: mergedArticles,
   }
   const knownDelta = Math.max(0, (next.known || []).length - prevKnownLen)
   user.progress = next

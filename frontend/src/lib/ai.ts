@@ -125,7 +125,7 @@ export async function aiGenerateArticle(opts: {
       { role: 'system', content: sys },
       { role: 'user', content: user },
     ],
-    { model: 'agnes-2.0-flash', max_tokens: 2500, temperature: 0.85 }
+    { model: 'agnes-1.5-flash', max_tokens: 2500, temperature: 0.85 }
   );
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
