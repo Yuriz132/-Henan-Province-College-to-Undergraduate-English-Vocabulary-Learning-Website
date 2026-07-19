@@ -14,10 +14,10 @@ export function AIChatFAB() {
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // 拖拽位置：初始在右边距顶部 1/3 处（直接用计算值，不用 useEffect 延迟）
+  // 拖拽位置：初始右下角
   const [pos, setPos] = useState(() => ({
     x: typeof window !== 'undefined' ? window.innerWidth - 60 : 300,
-    y: typeof window !== 'undefined' ? Math.round(window.innerHeight / 3) : 200,
+    y: typeof window !== 'undefined' ? window.innerHeight - 120 : 500,
   }));
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
@@ -127,11 +127,11 @@ export function AIChatFAB() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown}
-        className="liquid-glass liquid-glass-shine fixed z-[100] flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20"
+        className="fixed z-[100] flex h-12 w-12 items-center justify-center rounded-full bg-primary/90 shadow-lg shadow-primary/40 text-white transition-all active:scale-95"
         style={{ left: pos.x, top: pos.y }}
         aria-label="AI 学习助手"
       >
-        {open ? <X className="h-5 w-5 text-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
+        {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
       </button>
 
       {/* 聊天面板 — 液态玻璃样式 */}

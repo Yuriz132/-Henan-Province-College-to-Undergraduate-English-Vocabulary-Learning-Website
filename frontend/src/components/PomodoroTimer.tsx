@@ -166,7 +166,7 @@ export function PomodoroTimer() {
   const circumference = 2 * Math.PI * ringRadius;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+    <div className="fixed bottom-4 left-4 z-50 flex flex-col items-start">
       {/* 展开面板 */}
       {expanded && (
         <LiquidGlass as="div" className="liquid-glass mb-3 w-72 p-4" style={{ borderRadius: 'calc(var(--radius) + 8px)' }}>
