@@ -155,35 +155,52 @@ export default function Index() {
         </p>
       </FlyIn>
 
-      {/* 统计 — 4 张卡片（2列2排），点击弹出折线图 */}
+      {/* 统计 — 4 张卡片（2列2排），分别跳转不同页面 */}
       <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {([
-          { label: '单词总数', value: allWords.length, icon: Layers, color: 'text-primary' },
-          { label: '已收藏', value: starredCount, icon: Star, color: 'text-warning' },
-          { label: '已掌握', value: knownCount, icon: TrendingUp, color: 'text-success' },
+          { label: '单词总数', value: allWords.length, icon: Layers, color: 'text-primary', to: '/browse' },
+          { label: '已收藏', value: starredCount, icon: Star, color: 'text-warning', to: '/starred' },
+          { label: '已掌握', value: knownCount, icon: TrendingUp, color: 'text-success', to: '/starred?tab=known' },
           {
             label: '学习情况',
             value: `${totalProgress}%`,
             icon: Activity,
             color: 'text-accent',
             extra: `${streak}天 · ${dailyAverage}/日`,
+            action: () => setChartOpen(true),
           },
         ] as const).map((s, idx) => {
           const Icon = s.icon;
+          const body = (
+            <>
+              <Icon className={`mb-1.5 h-4 w-4 ${s.color}`} />
+              <div className="text-xl font-bold text-foreground">{s.value}</div>
+              <div className="text-[11px] text-muted-foreground">{s.label}</div>
+              {('extra' in s && s.extra) && (
+                <div className="mt-0.5 text-[10px] text-muted-foreground/70">{s.extra}</div>
+              )}
+            </>
+          );
+          const cardCls = 'liquid-glass card-bounce flex h-24 w-full flex-col justify-between p-3 text-left transition-all hover:-translate-y-0.5 active:scale-[0.98]';
           return (
             <FlyIn key={s.label} delay={idx * 0.05}>
-              <button
-                onClick={() => setChartOpen(true)}
-                className="liquid-glass card-bounce w-full p-3 text-left transition-all hover:-translate-y-0.5 active:scale-[0.98]"
-                style={{ borderRadius: 'var(--radius-lg)' }}
-              >
-                <Icon className={`mb-1.5 h-4 w-4 ${s.color}`} />
-                <div className="text-xl font-bold text-foreground">{s.value}</div>
-                <div className="text-[11px] text-muted-foreground">{s.label}</div>
-                {('extra' in s && s.extra) && (
-                  <div className="mt-0.5 text-[10px] text-muted-foreground/70">{s.extra}</div>
-                )}
-              </button>
+              {'to' in s && s.to ? (
+                <Link
+                  to={s.to}
+                  className={cardCls}
+                  style={{ borderRadius: 'var(--radius-lg)' }}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <button
+                  onClick={s.action}
+                  className={cardCls}
+                  style={{ borderRadius: 'var(--radius-lg)' }}
+                >
+                  {body}
+                </button>
+              )}
             </FlyIn>
           );
         })}
