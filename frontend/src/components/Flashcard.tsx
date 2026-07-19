@@ -194,6 +194,87 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
     return () => window.removeEventListener('keydown', onKey);
   }, [next, prev, toggleFlip, onClose, immersive, exitImmersive]);
 
+  const AiDetailView = () => {
+    if (!aiDetail && !aiLoading) return null;
+    return (
+      <div
+        className="relative z-[2] mt-4 w-full max-w-2xl"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+      >
+        <div className="liquid-glass max-h-48 overflow-y-auto rounded-xl border border-white/10 p-4 text-sm">
+          {aiLoading ? (
+            <div className="flex items-center gap-2 py-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" /> AI 正在解析…
+            </div>
+          ) : aiDetail ? (
+            <div className="space-y-3">
+              {aiDetail.cnMeaning && (
+                <div>
+                  <div className="text-xs font-medium text-primary">中文释义</div>
+                  <p className="mt-0.5 text-base font-semibold text-foreground">{aiDetail.cnMeaning}</p>
+                </div>
+              )}
+              {aiDetail.enDef && (
+                <div>
+                  <div className="text-xs font-medium text-primary">英文</div>
+                  <p className="mt-0.5 text-sm italic text-foreground/80">{aiDetail.enDef}</p>
+                </div>
+              )}
+              {aiDetail.example && (
+                <div>
+                  <div className="text-xs font-medium text-primary">例句</div>
+                  <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{aiDetail.example}</p>
+                </div>
+              )}
+              {aiDetail.similarWords?.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-primary">形近词（河南专升本常考）</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {aiDetail.similarWords.map((s, i) => (
+                      <span key={i} className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                        {s.word}<span className="ml-1 text-foreground/60">{s.cn}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {aiDetail.phrases?.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-primary">常用短语</div>
+                  <div className="mt-1 space-y-0.5">
+                    {aiDetail.phrases.map((p, i) => (
+                      <div key={i} className="text-xs text-foreground/80">
+                        <span className="text-foreground">{p.en}</span>
+                        <span className="ml-1.5 text-muted-foreground">/ {p.cn}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {aiDetail.tenses?.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-primary">时态变形</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {aiDetail.tenses.map((t, i) => (
+                      <span key={i} className="rounded-md bg-accent/10 px-1.5 py-0.5 text-xs text-accent">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button onClick={() => setAiDetail(null)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                <X className="h-3 w-3" /> 收起
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-destructive">{aiError || '解析失败'}</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (!current) return null;
 
   const starred = isStarred?.(current.id);
@@ -308,9 +389,18 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           </h2>
 
           {current.phonetic && (
-            <p className="relative z-[2] mt-4 text-center font-mono text-xl text-muted-foreground">
-              {current.phonetic}
-            </p>
+            <div className="relative z-[2] mt-4 flex items-center gap-2">
+              <p className="text-center font-mono text-xl text-muted-foreground">
+                {current.phonetic}
+              </p>
+              <button
+                onClick={(e) => { e.stopPropagation(); speak(); }}
+                className="liquid-glass liquid-glass-shine inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-all hover:text-primary active:scale-90"
+                aria-label="发音"
+              >
+                <Volume2 className="h-4 w-4" />
+              </button>
+            </div>
           )}
 
           <p className="relative z-[2] mt-3 text-center text-lg text-muted-foreground font-medium">
@@ -318,13 +408,44 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           </p>
         </div>
 
-        {/* 发音按钮 */}
-        <button
-          onClick={() => speak()}
-          className="liquid-glass liquid-glass-shine relative z-[2] mt-10 inline-flex items-center gap-2 rounded-full px-6 py-3 text-base text-muted-foreground transition-all hover:text-primary active:scale-95"
-        >
-          <Volume2 className="h-5 w-5" /> 发音
-        </button>
+        {/* 掌握 / 收藏 / AI 三按钮 */}
+        <div className="relative z-[2] mt-6 flex items-center gap-3">
+          {onKnown && (
+            <button
+              onClick={() => { onKnown(current.id, index + 1); next(); }}
+              className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
+            >
+              <Check className="h-4 w-4 text-success" />
+              <span className="text-sm text-muted-foreground">掌握</span>
+            </button>
+          )}
+          {onStar && (
+            <button
+              onClick={() => onStar(current.id)}
+              className={cn('liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 active:scale-95', starred && 'liquid-glass-accent')}
+            >
+              <Star className={cn('h-4 w-4 transition-transform', starred ? 'fill-warning text-warning scale-110' : 'text-muted-foreground')} />
+              <span className={cn('text-sm', starred ? 'text-warning' : 'text-muted-foreground')}>{starred ? '已收藏' : '收藏'}</span>
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              if (aiLoading) return;
+              setAiLoading(true); setAiError(''); setAiDetail(null);
+              try {
+                const detail = await aiExplainWord(current.word, current.meaning);
+                setAiDetail(detail);
+              } catch { setAiError('AI 解析失败'); }
+              finally { setAiLoading(false); }
+            }}
+            className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-primary active:scale-95"
+          >
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            <span className="text-sm text-muted-foreground">AI</span>
+          </button>
+        </div>
+
+        <AiDetailView />
 
         {/* 操作提示 */}
         <p className="mt-12 text-center text-xs text-muted-foreground/50">
@@ -474,7 +595,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
             className="liquid-glass liquid-glass-shine flex h-12 items-center gap-2 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
           >
             <Check className="h-5 w-5 text-success" />
-            <span className="text-sm text-muted-foreground">认识</span>
+            <span className="text-sm text-muted-foreground">掌握</span>
           </button>
         )}
 
@@ -496,84 +617,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       </div>
 
       {/* AI 单词解析结果 */}
-      {(aiDetail || aiLoading) && (
-        <div className="mt-4 w-full max-w-2xl">
-          <div className="liquid-glass rounded-xl border border-white/10 p-4 text-sm">
-            {aiLoading ? (
-              <div className="flex items-center gap-2 py-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" /> AI 正在解析…
-              </div>
-            ) : aiDetail ? (
-              <div className="space-y-3">
-                {/* 中文释义（核心） */}
-                {aiDetail.cnMeaning && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">中文释义</div>
-                    <p className="mt-0.5 text-base font-semibold text-foreground">{aiDetail.cnMeaning}</p>
-                  </div>
-                )}
-                {/* 英文释义 */}
-                {aiDetail.enDef && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">英文</div>
-                    <p className="mt-0.5 text-sm italic text-foreground/80">{aiDetail.enDef}</p>
-                  </div>
-                )}
-                {/* 例句 + 中文翻译 */}
-                {aiDetail.example && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">例句</div>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{aiDetail.example}</p>
-                  </div>
-                )}
-                {/* 形近词 + 中文 */}
-                {aiDetail.similarWords?.length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">形近词（河南专升本常考）</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {aiDetail.similarWords.map((s, i) => (
-                        <span key={i} className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                          {s.word}<span className="ml-1 text-foreground/60">{s.cn}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* 常用短语 + 中文 */}
-                {aiDetail.phrases?.length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">常用短语</div>
-                    <div className="mt-1 space-y-0.5">
-                      {aiDetail.phrases.map((p, i) => (
-                        <div key={i} className="text-xs text-foreground/80">
-                          <span className="text-foreground">{p.en}</span>
-                          <span className="ml-1.5 text-muted-foreground">/ {p.cn}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* 时态/词形变化 */}
-                {aiDetail.tenses?.length > 0 && (
-                  <div>
-                    <div className="text-xs font-medium text-primary">时态变形</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {aiDetail.tenses.map((t, i) => (
-                        <span key={i} className="rounded-md bg-accent/10 px-1.5 py-0.5 text-xs text-accent">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <button onClick={() => setAiDetail(null)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <X className="h-3 w-3" /> 收起
-                </button>
-              </div>
-            ) : (
-              <p className="text-xs text-destructive">{aiError || '解析失败'}</p>
-            )}
-          </div>
-        </div>
-      )}
+      <AiDetailView />
 
       {/* 评论区：翻到当前单词时可记录短语 / 近义词，所有访客共享可见 */}
       <Suspense fallback={null}>
