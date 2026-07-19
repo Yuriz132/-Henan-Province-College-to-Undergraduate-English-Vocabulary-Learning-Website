@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, Loader2, X, Check, Sparkles, Pencil } from 'lucide-react';
 import { aiExtractWordsFromImage, type ExtractedWord } from '@/lib/ai';
 import type { CustomWord } from '@/types/word';
 
 interface AIImportPanelProps {
   onImport: (words: CustomWord[]) => void;
+  /** 自动触发文件选择器（用于"图片一键导入"快捷入口） */
+  autoOpen?: boolean;
 }
 
 type Stage = 'idle' | 'loading' | 'preview' | 'extracting';
@@ -48,7 +50,7 @@ async function compressImage(file: File): Promise<string> {
   });
 }
 
-export function AIImportPanel({ onImport }: AIImportPanelProps) {
+export function AIImportPanel({ onImport, autoOpen }: AIImportPanelProps) {
   const [stage, setStage] = useState<Stage>('idle');
   const [imgData, setImgData] = useState<string | null>(null);
   const [hint, setHint] = useState('');
@@ -66,6 +68,14 @@ export function AIImportPanel({ onImport }: AIImportPanelProps) {
     if (fileRef.current) fileRef.current.value = '';
     if (cameraRef.current) cameraRef.current.value = '';
   };
+
+  // autoOpen=true 时自动弹出文件选择器（仅一次）
+  useEffect(() => {
+    if (autoOpen && stage === 'idle') {
+      const t = setTimeout(() => fileRef.current?.click(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [autoOpen, stage]);
 
   const handleFile = async (file: File) => {
     if (!file) return;

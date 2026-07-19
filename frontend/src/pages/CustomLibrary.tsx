@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, BookMarked, Pencil, Trash2, Play, Volume2, X, ChevronRight, FileText, Check } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Plus, BookMarked, Pencil, Trash2, Play, Volume2, X, ChevronRight, FileText, Check, UploadCloud, Sparkles } from 'lucide-react';
 import { useCustomWords } from '@/hooks/use-custom-words';
 import type { CustomWord } from '@/types/word';
 import { speakWord } from '@/lib/speak';
@@ -81,19 +81,36 @@ export default function CustomLibrary() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <FlyIn>
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="font-bold text-foreground" style={{ fontSize: 'var(--font-size-headline)' }}>
-              自定义词库
-            </h1>
-            <p className="mt-1 text-muted-foreground">创建你自己的单词本，可翻卡学习、听音写词</p>
-          </div>
-          <button
-            onClick={() => setAdding(true)}
-            className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+        <div className="liquid-glass mb-6 overflow-hidden p-5 text-center sm:p-7"
+          style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
+        >
+          <h1 className="font-bold text-foreground"
+            style={{ fontSize: 'clamp(1.4rem, 5vw, 1.8rem)', lineHeight: 1.1 }}
           >
-            <Plus className="h-4 w-4" /> 新建词库
-          </button>
+            <Sparkles className="inline h-5 w-5 text-primary" /> 自定义词库
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            打造专属单词本，AI 拍照/上传图片一键整理 · 翻卡学习 · 听音写词
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2 max-w-sm mx-auto">
+            <button
+              onClick={() => setAdding(true)}
+              className="liquid-glass-accent liquid-glass liquid-glass-shine card-bounce flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+            >
+              <Plus className="h-3.5 w-3.5" /> 新建词库
+            </button>
+            <button
+              onClick={() => {
+                const name = window.prompt('给词库起个名字：', '我的图片词库')?.trim();
+                if (!name) return;
+                const id = createList(name);
+                navigate(`/custom/${id}?autoImport=1`);
+              }}
+              className="liquid-glass liquid-glass-shine card-bounce flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+            >
+              <UploadCloud className="h-3.5 w-3.5" /> 图片一键导入
+            </button>
+          </div>
         </div>
       </FlyIn>
 
@@ -211,6 +228,8 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onAddWords, o
   const [meaning, setMeaning] = useState('');
   const [editing, setEditing] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [searchParams] = useSearchParams();
+  const autoOpen = searchParams.get('autoImport') === '1';
 
   // 批量导入状态
   const [showImport, setShowImport] = useState(false);
@@ -322,8 +341,11 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onAddWords, o
         </button>
       </div>
 
-      {/* AI 智能导入（上传图片/拍照） */}
-      <AIImportPanel onImport={onAddWords} />
+      {/* AI 智能导入（上传图片/拍照），支持 autoOpen 触发文件选择器 */}
+      <AIImportPanel
+        onImport={onAddWords}
+        autoOpen={autoOpen}
+      />
 
       {/* 批量导入 */}
       {showImport && (

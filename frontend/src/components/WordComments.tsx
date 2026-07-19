@@ -41,7 +41,7 @@ export function WordComments({
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthed, isAdmin } = useAuth();
+  const { isAuthed, isAdmin, user } = useAuth();
 
   const headerTitle = title ?? '大家的灵光一现';
   const headerSubtitle = subtitle ?? (wordText ? `关于 “${wordText}” 的短语 / 近义词 / 记忆口诀` : '');
@@ -89,7 +89,7 @@ export function WordComments({
       await deleteComment(id);
       setComments((prev) => prev.filter((c) => c._id !== id));
     } catch {
-      alert('删除失败，请确认你有管理员权限');
+      alert('删除失败，请确认权限');
     }
   };
 
@@ -123,11 +123,11 @@ export function WordComments({
                   {c.author} · {timeAgo(c.createdAt)}
                 </p>
               </div>
-              {isAdmin && (
+              {(isAdmin || c.author === user) && (
                 <button
                   onClick={() => handleDelete(c._id)}
                   className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-destructive"
-                  title="删除评论（管理员）"
+                  title={isAdmin && c.author !== user ? '删除评论（管理员）' : '删除我的评论'}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
