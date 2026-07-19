@@ -4,19 +4,31 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { z } from 'zod'
 import { authMiddleware } from './auth'
+import Path from 'path'
 
 // ============================================
-// 违禁词过滤（全字匹配，不区分大小写）
+// 违禁词过滤（使用 DFA 开源库 sensitive-word-filter，支持中英文）
 // ============================================
-const FORBIDDEN_WORDS = [
-  'fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'dick', 'piss',
-  '操', '草', '傻逼', '尼玛', '妈的', '你妈', '死妈', '草泥马', '日你',
-  '鸡巴', '狗屎', '废物', '去死', '沙比', '煞笔', '脑残', '智障',
-]
+const wc = require('sensitive-word-filter')
+
+const CUSTOM_BAD_WORDS = Path.join(__dirname, '..', '..', 'config', 'bad-words.txt')
+
+// 添加自定义违禁词（文件每行一个，UTF-8）
+try {
+  const fs = require('fs')
+  if (fs.existsSync(CUSTOM_BAD_WORDS)) {
+    const lines = fs.readFileSync(CUSTOM_BAD_WORDS, 'utf-8').split(/\r?\n/).filter(Boolean)
+    for (const w of lines) wc.addWord(w.trim())
+  }
+} catch {}
+wc.addWord('fuck')
+wc.addWord('shit')
+wc.addWord('damn')
 
 function hasForbiddenWord(text: string): boolean {
-  const lower = text.toLowerCase().replace(/[\s-_\u200b]+/g, '')
-  return FORBIDDEN_WORDS.some((w) => lower.includes(w.toLowerCase()))
+  if (!text) return false
+  const filtered = wc.filter(text)
+  return filtered !== text
 }
 
 // ============================================

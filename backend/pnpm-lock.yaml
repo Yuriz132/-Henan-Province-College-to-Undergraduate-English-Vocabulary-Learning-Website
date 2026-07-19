@@ -29,6 +29,9 @@ importers:
       pino-http:
         specifier: ^11.0.0
         version: 11.0.0
+      sensitive-word-filter:
+        specifier: ^1.0.2
+        version: 1.0.2
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -1954,6 +1957,9 @@ packages:
   send@0.19.2:
     resolution: {integrity: sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==}
     engines: {node: '>= 0.8.0'}
+
+  sensitive-word-filter@1.0.2:
+    resolution: {integrity: sha512-P/RUI2A9M6J921lfKNneLK6a/OToF0+qmz5xVtPS9yjRrS/FBNBHQJDnlmHpMYtdhydjqlebrh2hfAEDLFx8GA==}
 
   serve-static@1.16.3:
     resolution: {integrity: sha512-x0RTqQel6g5SY7Lg6ZreMmsOzncHFU7nhnRWkKgWuMTu5NN0DR5oruckMqRvacAN9d5w6ARnRBXl9xhDCgfMeA==}
@@ -4416,6 +4422,8 @@ snapshots:
       statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
+
+  sensitive-word-filter@1.0.2: {}
 
   serve-static@1.16.3:
     dependencies:
