@@ -122,7 +122,7 @@ export function AIChatFAB() {
 
   return (
     <>
-      {/* 悬浮按钮 — 可拖动 */}
+      {/* 悬浮按钮 — 液态玻璃可拖动 */}
       <button
         ref={fabRef}
         onClick={() => { if (!dragging.current) setOpen(v => !v); }}
@@ -130,18 +130,18 @@ export function AIChatFAB() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown}
-        className="fixed z-[100] flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition-transform active:scale-95"
+        className="liquid-glass liquid-glass-shine fixed z-[100] flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20"
         style={{ left: pos.x, top: pos.y }}
         aria-label="AI 学习助手"
       >
-        {open ? <X className="h-5 w-5 text-white" /> : <Bot className="h-5 w-5 text-white" />}
+        {open ? <X className="h-5 w-5 text-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
       </button>
 
-      {/* 聊天面板 — 紧随按钮位置 */}
+      {/* 聊天面板 — 液态玻璃样式 */}
       {open && (
         <div
-          className="fixed z-[99] flex h-[400px] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[oklch(0.18_0.03_270/0.96)] shadow-2xl backdrop-blur-xl"
-          style={{ left: Math.max(8, Math.min(pos.x - 280, window.innerWidth - 336)), top: Math.max(8, Math.min(pos.y + 0, window.innerHeight - 416)) }}
+          className="liquid-glass fixed z-[99] flex h-[400px] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden shadow-2xl"
+          style={{ left: Math.max(8, Math.min(pos.x - 280, window.innerWidth - 336)), top: Math.max(8, Math.min(pos.y + 0, window.innerHeight - 416)), borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
             <Sparkles className="h-4 w-4 text-primary" />
