@@ -29,6 +29,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const [shuffled, setShuffled] = useState(false);
   const [order, setOrder] = useState<number[]>(() => words.map((_, i) => i));
   const [immersive, setImmersive] = useState(false);
+  const [cardExit, setCardExit] = useState(false); // 卡片切换动画
   // AI 单词解析
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDetail, setAiDetail] = useState<WordAIDetail | null>(null);
@@ -70,16 +71,27 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   }, [words]);
 
   const next = useCallback(() => {
-    setFlipped(false);
-    setIndex((i) => (i + 1) % words.length);
+    setCardExit(true);
+    setTimeout(() => {
+      setFlipped(false);
+      setIndex((i) => (i + 1) % words.length);
+      setCardExit(false);
+    }, 200);
   }, [words.length]);
 
   const prev = useCallback(() => {
-    setFlipped(false);
-    setIndex((i) => (i - 1 + words.length) % words.length);
+    setCardExit(true);
+    setTimeout(() => {
+      setFlipped(false);
+      setIndex((i) => (i - 1 + words.length) % words.length);
+      setCardExit(false);
+    }, 200);
   }, [words.length]);
 
-  const toggleFlip = useCallback(() => setFlipped((f) => !f), []);
+  const toggleFlip = useCallback(() => {
+    setFlipped((f) => !f);
+    try { navigator?.vibrate?.([20, 40, 20]); } catch {} // 震动两下
+  }, []);
 
   const speak = useCallback(() => {
     if (current) speakWord(current.word);
@@ -92,11 +104,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const enterImmersive = useCallback(() => {
     setFlipped(false);
     setImmersive(true);
+    document.body.setAttribute('data-immersive', 'true');
   }, []);
 
   const exitImmersive = useCallback(() => {
     setImmersive(false);
-    // 退出后回到页面顶部，确保翻卡卡片（当前单词）进入视野
+    document.body.removeAttribute('data-immersive');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -283,6 +296,11 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           </p>
         )}
 
+        {/* 中文释义 */}
+        <p className="relative z-[2] mt-3 text-center text-lg text-muted-foreground font-medium">
+          {current.meaning}
+        </p>
+
         {/* 发音按钮 */}
         <button
           onClick={() => speak()}
@@ -378,7 +396,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       {/* 翻卡 */}
       <div
         ref={cardRef}
-        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped', jellying && 'card-jelly')}
+        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped', jellying && 'card-jelly', cardExit && 'flashcard-exit')}
         style={{
           transform: pressed
             ? `perspective(800px) scale(0.95) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain, Play } from 'lucide-react';
-import { allWords } from '@/lib/words-data';
+import { allWords, partStructure, getListKey } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
@@ -8,7 +8,7 @@ import { StudyPlans } from '@/components/StudyPlans';
 import { StudyChart } from '@/components/StudyChart';
 import { PersonalSummary } from '@/components/PersonalSummary';
 import { ArticleGenerator } from '@/components/ArticleGenerator';
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import apiClient from '@/lib/api-client';
 import { aiChat } from '@/lib/ai';
 
@@ -72,12 +72,15 @@ export default function Index() {
       .catch(() => {});
   }, []);
 
-  // AI 动态生成「升本词汇」下的激励文案（按学习状态分类）
+  // AI 动态生成「升本词汇」下的激励文案（按学习状态分类，5分钟刷新一次）
   useEffect(() => {
     const tag = statusTag(totalProgress, streak);
-    const cacheKey = `liquid-words:motto:${tag}:${Math.floor(totalProgress / 5)}:${streak > 0 ? '1' : '0'}`;
+    const cacheKey = `liquid-words:motto:v2:${tag}:${Math.floor(totalProgress / 5)}`;
+    const tsKey = cacheKey + ':ts';
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
+    const lastTs = localStorage.getItem(tsKey);
+    const now = Date.now();
+    if (cached && lastTs && now - Number(lastTs) < 300000) {
       setMotto(cached);
       return;
     }
@@ -90,7 +93,7 @@ export default function Index() {
       .then((text) => {
         const clean = (text || '').replace(/^["「']|["」']$/g, '').trim() || `今天继续，${tag} 阶段稳扎稳打 ✨`;
         setMotto(clean);
-        try { localStorage.setItem(cacheKey, clean); } catch {}
+        try { localStorage.setItem(cacheKey, clean); localStorage.setItem(tsKey, String(Date.now())); } catch {}
       })
       .catch(() => { /* 失败就保持默认 motto */ });
   }, [totalProgress, streak, totalReviewed, dailyAverage]);
@@ -98,6 +101,23 @@ export default function Index() {
   const scrollToFeedback = () => {
     document.getElementById('feedback-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // 根据学习进度计算「下一个应该学的 List」，优先未完成的
+  const nextFlashcardUrl = useMemo(() => {
+    for (const part of partStructure) {
+      for (const list of part.lists) {
+        const k = getListKey(part.name, list.name);
+        const p = progress[k];
+        if (!p || p.reviewed < list.total) {
+          return `/flashcards/${encodeURIComponent(part.name)}/${encodeURIComponent(list.name)}`;
+        }
+      }
+    }
+    // 全部学完：返回第一个
+    const p0 = partStructure[0];
+    const l0 = p0?.lists[0];
+    return l0 ? `/flashcards/${encodeURIComponent(p0.name)}/${encodeURIComponent(l0.name)}` : '/browse';
+  }, [progress]);
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6">
@@ -146,7 +166,7 @@ export default function Index() {
           </div>
           <div className="mt-3">
             <Link
-              to="/browse"
+              to={nextFlashcardUrl}
               className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-5 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/25 hover:-translate-y-0.5 active:scale-95"
             >
               <Play className="h-3.5 w-3.5" /> 翻卡学习（闪记单词）

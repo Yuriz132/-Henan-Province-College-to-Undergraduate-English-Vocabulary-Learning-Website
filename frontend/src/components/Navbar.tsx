@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Search, Star, LayoutGrid, BookMarked, GitCompareArrows, AudioLines } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LiquidGlass } from '@/components/LiquidGlass';
@@ -17,12 +17,9 @@ const navItems = [
 
 // 空闲多久后自动上滑隐藏（ms）
 const IDLE_HIDE_MS = 4500;
-// 左右滑动切换页面的阈值（px）
-const SWIPE_THRESHOLD = 45;
 
 export function Navbar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [hidden, setHidden] = useState(false);
   const hideTimer = useRef<number | null>(null);
 
@@ -74,68 +71,7 @@ export function Navbar() {
     };
   }, []);
 
-  // 左右滑动切换页面：触摸滑动 / 触控板双指(滚轮 deltaX) / 鼠标拖拽 统一处理
-  const lastNav = useRef(0);
-  const pathRef = useRef(location.pathname);
-  useEffect(() => {
-    pathRef.current = location.pathname;
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const findIdx = () =>
-      navItems.findIndex((item) =>
-        item.to === '/' ? pathRef.current === '/' : pathRef.current.startsWith(item.to)
-      );
-    const go = (dir: number) => {
-      const now = Date.now();
-      if (now - lastNav.current < 600) return; // 冷却，避免一次滑动连续翻页
-      const idx = findIdx();
-      if (idx === -1) return;
-      const next = idx + dir;
-      if (next >= 0 && next < navItems.length) {
-        lastNav.current = now;
-        navigate(navItems[next].to);
-      }
-    };
-
-    // 触控板双指横向滑动：wheel 事件的 deltaX 主导
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > SWIPE_THRESHOLD) {
-        go(e.deltaX < 0 ? 1 : -1);
-      }
-    };
-
-    // 鼠标拖拽 / 触摸滑动：pointer 事件，水平位移且大于垂直、超过阈值才触发
-    let sx = 0;
-    let sy = 0;
-    let tracking = false;
-    const onPointerDown = (e: PointerEvent) => {
-      const t = e.target as HTMLElement | null;
-      // 在输入框/按钮/链接/弹窗上不起始，避免误触与干扰点击
-      if (t && t.closest('input,textarea,select,button,a,[role="dialog"]')) return;
-      sx = e.clientX;
-      sy = e.clientY;
-      tracking = true;
-    };
-    const onPointerUp = (e: PointerEvent) => {
-      if (!tracking) return;
-      tracking = false;
-      const dx = e.clientX - sx;
-      const dy = e.clientY - sy;
-      if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)) {
-        go(dx > 0 ? -1 : 1);
-      }
-    };
-
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('pointerdown', onPointerDown, { passive: true });
-    window.addEventListener('pointerup', onPointerUp, { passive: true });
-    return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointerup', onPointerUp);
-    };
-  }, [navigate]);
+  // 顶栏空闲自动隐藏（无左右滑动）
 
   return (
     <header className="sticky top-0 z-50 w-full">

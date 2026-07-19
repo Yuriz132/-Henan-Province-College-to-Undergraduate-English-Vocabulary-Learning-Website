@@ -555,6 +555,22 @@
   transition: transform 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* 沉浸模式：顶栏强制隐藏 */
+[data-immersive="true"] .lg-imm-bar {
+  transform: translateY(-200%) !important;
+  pointer-events: none !important;
+  transition: transform 0.3s ease-in !important;
+}
+
+/* 卡片切出动画 */
+.flashcard-exit {
+  animation: cardSlideOut 0.2s ease-out forwards;
+}
+@keyframes cardSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-30px); }
+}
+
 /* ============================================================
    顶栏导航选中态（鸿蒙风格）
    - 选中图标 ElasticOut 弹性抖动 + 上浮抬升

@@ -54,7 +54,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
 
   const [type, setType] = useState<PlanType>('units');
   const [title, setTitle] = useState('');
-  const [target, setTarget] = useState(50);
+  const [target, setTarget] = useState(45);
   const [tasks, setTasks] = useState<{ id: string; text: string }[]>([EMPTY_TASK()]);
   // 单元选择状态：展开的 part 名集合 + 已选的 listKey 集合
   const [expandedParts, setExpandedParts] = useState<Set<string>>(new Set());
@@ -65,7 +65,7 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
     if (open) {
       setType('units');
       setTitle('');
-      setTarget(50);
+      setTarget(45);
       setTasks([EMPTY_TASK()]);
       setExpandedParts(new Set());
       setSelectedListKeys(new Set());
