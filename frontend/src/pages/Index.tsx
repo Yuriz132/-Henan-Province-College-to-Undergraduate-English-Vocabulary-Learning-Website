@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain } from 'lucide-react';
+import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain, Play } from 'lucide-react';
 import { allWords } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
@@ -143,6 +143,14 @@ export default function Index() {
             >
               <Target className="h-3.5 w-3.5" /> 学习计划
             </button>
+          </div>
+          <div className="mt-3">
+            <Link
+              to="/browse"
+              className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-5 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/25 hover:-translate-y-0.5 active:scale-95"
+            >
+              <Play className="h-3.5 w-3.5" /> 翻卡学习（闪记单词）
+            </Link>
           </div>
         </div>
       </ExplodeIn>

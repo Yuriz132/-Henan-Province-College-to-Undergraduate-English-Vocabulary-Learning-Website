@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2, Sparkles, Loader2, X } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 import { speakWord } from '@/lib/speak';
+import { aiExplainWord, type WordAIDetail } from '@/lib/ai';
 
 // 评论区按需加载，避免 CloudBase SDK 拖慢首屏
 const WordComments = lazy(() =>
@@ -28,6 +29,10 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const [shuffled, setShuffled] = useState(false);
   const [order, setOrder] = useState<number[]>(() => words.map((_, i) => i));
   const [immersive, setImmersive] = useState(false);
+  // AI 单词解析
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiDetail, setAiDetail] = useState<WordAIDetail | null>(null);
+  const [aiError, setAiError] = useState('');
   const touchStartY = useRef(0);
   // 果冻回弹交互状态
   const [pressed, setPressed] = useState(false);
@@ -340,6 +345,22 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
             <Maximize2 className="h-4 w-4" />
             <span className="hidden sm:inline">沉浸</span>
           </button>
+          <button
+            onClick={async () => {
+              if (aiLoading) return;
+              setAiLoading(true); setAiError(''); setAiDetail(null);
+              try {
+                const detail = await aiExplainWord(current.word, current.meaning);
+                setAiDetail(detail);
+              } catch { setAiError('AI 解析失败'); }
+              finally { setAiLoading(false); }
+            }}
+            className="liquid-glass liquid-glass-shine flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
+            title="AI 解析单词（简单英文释义、形近词、短语、时态）"
+          >
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            <span className="hidden sm:inline">AI 解析</span>
+          </button>
         </div>
       </div>
 
@@ -438,6 +459,63 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
+
+      {/* AI 单词解析结果 */}
+      {(aiDetail || aiLoading) && (
+        <div className="mt-4 w-full max-w-2xl">
+          <div className="liquid-glass rounded-xl border border-white/10 p-4 text-sm">
+            {aiLoading ? (
+              <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" /> AI 正在解析…
+              </div>
+            ) : aiDetail ? (
+              <div className="space-y-2.5">
+                {aiDetail.simpleDef && (
+                  <div>
+                    <span className="text-xs font-medium text-primary">释义</span>
+                    <p className="mt-0.5 text-foreground/90">{aiDetail.simpleDef}</p>
+                  </div>
+                )}
+                {aiDetail.similarWords?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-primary">形近词（河南专升本常考）</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {aiDetail.similarWords.map((w, i) => (
+                        <span key={i} className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs text-primary">{w}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {aiDetail.phrases?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-primary">常用短语</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {aiDetail.phrases.map((p, i) => (
+                        <span key={i} className="rounded-md bg-white/5 px-1.5 py-0.5 text-xs text-foreground/80">{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {aiDetail.tenses?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-primary">时态变形</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {aiDetail.tenses.map((t, i) => (
+                        <span key={i} className="rounded-md bg-accent/10 px-1.5 py-0.5 text-xs text-accent">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setAiDetail(null)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  <X className="h-3 w-3" /> 收起
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-destructive">{aiError || '解析失败'}</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 评论区：翻到当前单词时可记录短语 / 近义词，所有访客共享可见 */}
       <Suspense fallback={null}>

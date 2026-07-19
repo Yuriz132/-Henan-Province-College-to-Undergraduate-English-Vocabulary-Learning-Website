@@ -93,3 +93,31 @@ export async function aiGenerateArticle(opts: {
     return { title: opts.title || 'Article', content: text, usedWords: [] };
   }
 }
+/** 解析单词详情：简易英文释义、形近词、短语、时态 */
+export interface WordAIDetail {
+  simpleDef: string;
+  similarWords: string[];
+  phrases: string[];
+  tenses: string[];
+}
+
+export async function aiExplainWord(word: string, meaning: string): Promise<WordAIDetail> {
+  const sys = `你是专升本英语老师。分析单词，输出 JSON：
+{
+  "simpleDef": "简易英文解释（20词内）",
+  "similarWords": ["形近词", ...]（河南专升本常考形近词，最多5个）,
+  "phrases": ["短语", ...]（常见搭配，最多5个）,
+  "tenses": ["过去式", ...]（不规则变形）
+}
+只返回 JSON。`;
+  const text = await aiChat([
+    { role: 'system', content: sys },
+    { role: 'user', content: `单词：${word}，中文释义：${meaning}` }
+  ], { max_tokens: 600, temperature: 0.5 });
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : { simpleDef: '', similarWords: [], phrases: [], tenses: [] };
+  } catch {
+    return { simpleDef: '', similarWords: [], phrases: [], tenses: [] };
+  }
+}

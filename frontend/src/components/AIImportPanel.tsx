@@ -77,13 +77,14 @@ export function AIImportPanel({ onImport }: AIImportPanelProps) {
       setStage('extracting');
       const res = await aiExtractWordsFromImage({ imageDataUrl: data, hint: hint.trim() || undefined });
       if (!res.words.length) {
-        setErrMsg('未识别到任何英文单词。可以试试：1) 换更清晰的照片  2) 调整拍摄角度  3) 添加文字提示');
+        setErrMsg(`未识别到英文单词。${res.raw ? '（原始：' + res.raw.slice(0, 100) + '）' : '试试：1) 图片清晰度 2) 调整角度 3) 添加提示'}`);
       }
       setEditable(res.words);
       setStage('preview');
     } catch (e: any) {
-      setErrMsg(e?.response?.data?.message || e?.message || '识别失败');
-      setStage('idle');
+      const detail = e?.response?.data?.detail || e?.response?.data?.message || e?.message || '网络错误';
+      setErrMsg(`AI 识别失败：${detail.slice(0, 200)}`);
+      setStage('preview');   // 保留图片预览，用户可看到状态
     }
   };
 
