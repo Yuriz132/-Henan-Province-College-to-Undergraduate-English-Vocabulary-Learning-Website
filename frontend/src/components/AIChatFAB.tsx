@@ -76,19 +76,13 @@ export function AIChatFAB() {
   }, [known, starredCount, knownCount, totalReviewed, streak, dailyAverage, plans]);
 
   // 首次打开：只用预热的一次性欢迎消息
-  const initWelcome = useCallback(async () => {
-    if (initialized.current || msgs.length > 0) return;
+  const initWelcome = useCallback(() => {
+    if (initialized.current) return;
     initialized.current = true;
-    setMsgs([{ role: 'assistant', text: '你好！我是 AI 学习助手 🤓\n我已了解你的学习数据。直接问我吧！' }]);
-    // 后台不阻塞地用 AI 生成个性化欢迎词
-    try {
-      const res = await aiChat([
-        { role: 'system', content: '用 2 句话给出友好中文开场白，提及用户数据时使用自然语言（如"你已经学了XX词"）。只说欢迎语本身。' },
-        { role: 'user', content: sysPrompt.slice(0, 400) }
-      ], { max_tokens: 150, temperature: 0.9 });
-      if (res) setMsgs([{ role: 'assistant', text: res.trim() }]);
-    } catch {}
-  }, [sysPrompt, msgs.length]);
+    // 离线模板欢迎语（不调 AI，秒出）
+    const welcome = `你好！我是菲哥开发的 AI 学习助手 🤓\n\n我已加载你的学习数据：\n📚 已复习 ${totalReviewed} 词 · ⭐ 收藏 ${starredCount} · ✅ 掌握 ${knownCount}\n🔥 连续 ${streak} 天 · 📊 日均 ${dailyAverage} 词\n\n有什么学习问题直接问我！`;
+    setMsgs([{ role: 'assistant', text: welcome }]);
+  }, [totalReviewed, starredCount, knownCount, streak, dailyAverage]);
 
   useEffect(() => { if (open) initWelcome(); }, [open, initWelcome]);
   useEffect(() => { listRef.current?.scrollTo(0, listRef.current.scrollHeight); }, [msgs]);
