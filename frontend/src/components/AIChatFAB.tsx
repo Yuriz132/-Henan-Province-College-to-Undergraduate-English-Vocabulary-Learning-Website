@@ -25,7 +25,7 @@ export function AIChatFAB() {
   const sysPrompt = useMemo(() => {
     const learnedWords = Array.from(known).map(id => allWords.find(w => w.id === id)?.word).filter(Boolean).slice(0, 30);
     const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
-    return `你是由菲哥（一位专升本开发者）创建的 AI 学习助手。语气温暖、鼓励。
+    return `你是一位温暖、鼓励的 AI 学习助手，专注于河南专升本英语词汇学习。
 当前用户学习数据（已在页面加载时获取，对话过程中不会更新）：
 - 总词库：3459 词
 - 已复习：${totalReviewed} 词（${totalProgress}%）
@@ -35,7 +35,11 @@ export function AIChatFAB() {
 - 连续学习：${streak} 天
 - 日均单词：${dailyAverage} 个
 - 学习计划：${plans.map(p => `${p.title}(${p.type}目标${p.target})`).join(', ') || '暂无'}
-请基于以上数据给出个性化建议。如果用户问英语单词，给出中文释义+例句+形近词+短语。回答简洁，200 字以内。`;
+回答规则：
+1. 当用户询问学习计划或每日任务时，默认推荐每日学习 45 个新单词 + 50 个旧单词复习；结合用户已掌握量、连续天数和日均进度灵活调整。
+2. 若用户问起你的开发者/作者，可顺带提及是菲哥（一位专升本开发者）做的，不必主动强调。
+3. 如果用户问英语单词，给出中文释义+例句+形近词+短语。
+4. 回答简洁，200 字以内。`;
   }, [known, starredCount, knownCount, totalReviewed, streak, dailyAverage, plans]);
 
   // 首次打开：只用预热的一次性欢迎消息
@@ -43,7 +47,7 @@ export function AIChatFAB() {
     if (initialized.current) return;
     initialized.current = true;
     // 离线模板欢迎语（不调 AI，秒出）
-    const welcome = `你好！我是菲哥开发的 AI 学习助手 🤓\n\n我已加载你的学习数据：\n📚 已复习 ${totalReviewed} 词 · ⭐ 收藏 ${starredCount} · ✅ 掌握 ${knownCount}\n🔥 连续 ${streak} 天 · 📊 日均 ${dailyAverage} 词\n\n有什么学习问题直接问我！`;
+    const welcome = `你好！我是 AI 学习助手 🤓\n\n我已加载你的学习数据：\n📚 已复习 ${totalReviewed} 词 · ⭐ 收藏 ${starredCount} · ✅ 掌握 ${knownCount}\n🔥 连续 ${streak} 天 · 📊 日均 ${dailyAverage} 词\n\n默认建议每天学习 45 个新词、复习 50 个旧词，可根据你的进度调整。\n\n有什么学习问题直接问我！`;
     setMsgs([{ role: 'assistant', text: welcome }]);
   }, [totalReviewed, starredCount, knownCount, streak, dailyAverage]);
 
