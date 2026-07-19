@@ -8,6 +8,7 @@ import { httpLogger } from './middleware/logger'
 import { systemRouter } from './modules/system'
 import { authRouter } from './modules/auth'
 import { commentsRouter } from './modules/comments'
+import { aiRouter } from './modules/ai'
 // ============================================
 // Add your domain module imports here
 // ============================================
@@ -27,9 +28,9 @@ export const createApp = (): Application => {
     })
   )
 
-  // Body parsing and compression
-  app.use(express.json())
-  app.use(express.urlencoded({ extended: true }))
+  // Body parsing and compression (AI 图片 base64 较大，放宽到 20mb)
+  app.use(express.json({ limit: '20mb' }))
+  app.use(express.urlencoded({ extended: true, limit: '20mb' }))
   app.use(compression())
 
   // API routes - System & Health
@@ -40,6 +41,9 @@ export const createApp = (): Application => {
 
   // 评论（仅登录可发表，读取公开）
   app.use(env.API_PREFIX, commentsRouter)
+
+  // AI 代理（持有 AGNES_API_KEY）
+  app.use(env.API_PREFIX, aiRouter)
 
   // ============================================
   // Add your domain module routes here
