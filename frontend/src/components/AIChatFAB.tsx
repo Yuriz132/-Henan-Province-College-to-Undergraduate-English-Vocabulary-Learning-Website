@@ -141,7 +141,7 @@ export function AIChatFAB() {
       {/* 聊天面板 — 液态玻璃样式 */}
       {open && (
         <div
-          className="liquid-glass fixed z-[99] flex h-[400px] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden shadow-2xl"
+          className="fixed z-[200] flex h-[400px] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
           style={{ left: Math.max(8, Math.min(pos.x - 280, window.innerWidth - 336)), top: Math.max(8, Math.min(pos.y + 0, window.innerHeight - 416)), borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
