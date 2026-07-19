@@ -235,7 +235,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{backLabel}</div>
       <h3
         className="relative z-[2] mb-2 max-w-full text-center font-bold text-foreground whitespace-nowrap"
-        style={{ fontSize: `${current.word.length > 12 ? '1.0rem' : current.word.length > 9 ? '1.25rem' : current.word.length > 6 ? '1.5rem' : '1.875rem'}`, lineHeight: 1.1 }}
+        style={{ fontSize: `${current.word.length > 12 ? '1.2rem' : current.word.length > 9 ? '1.45rem' : current.word.length > 6 ? '1.65rem' : '1.875rem'}`, lineHeight: 1.1 }}
       >
         {current.word}
       </h3>
@@ -302,7 +302,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
         <div key={wordKey} className="word-animate flex flex-col items-center px-2 w-full max-w-full">
           <h2
             className="relative z-[2] max-w-full text-center font-bold text-foreground text-gradient whitespace-nowrap"
-            style={{ fontSize: `calc(var(--font-size-display) * ${current.word.length > 12 ? 0.55 : current.word.length > 9 ? 0.72 : current.word.length > 6 ? 0.95 : 1.3})`, lineHeight: 1.1 }}
+            style={{ fontSize: `calc(var(--font-size-display) * ${current.word.length > 12 ? 0.65 : current.word.length > 9 ? 0.88 : current.word.length > 6 ? 1.0 : 1.3})`, lineHeight: 1.1 }}
           >
             {current.word}
           </h2>
