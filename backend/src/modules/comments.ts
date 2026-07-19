@@ -6,6 +6,20 @@ import { z } from 'zod'
 import { authMiddleware } from './auth'
 
 // ============================================
+// 违禁词过滤（全字匹配，不区分大小写）
+// ============================================
+const FORBIDDEN_WORDS = [
+  'fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'dick', 'piss',
+  '操', '草', '傻逼', '尼玛', '妈的', '你妈', '死妈', '草泥马', '日你',
+  '鸡巴', '狗屎', '废物', '去死', '沙比', '煞笔', '脑残', '智障',
+]
+
+function hasForbiddenWord(text: string): boolean {
+  const lower = text.toLowerCase().replace(/[\s-_\u200b]+/g, '')
+  return FORBIDDEN_WORDS.some((w) => lower.includes(w.toLowerCase()))
+}
+
+// ============================================
 // 评论模块（仅登录用户可发表；读取公开）
 // 存储：backend/data/comments.json（与 users.json 同目录，零外部依赖）
 // 既用于单词的短语/近义词评论，也用于站点「反馈与建议」(wordId 取特殊值，如 -2)
@@ -69,6 +83,9 @@ commentsRouter.post('/comments', authMiddleware, async (req: Request, res: Respo
     return res.status(400).json({ message: parsed.error.issues[0]?.message ?? '参数错误' })
   }
   const { wordId, text } = parsed.data
+  if (hasForbiddenWord(text)) {
+    return res.status(400).json({ message: '评论内容包含违禁词汇' })
+  }
   const user = (req as Request & { user?: { username: string } }).user
   const comment: Comment = {
     _id: randomBytes(8).toString('hex'),
