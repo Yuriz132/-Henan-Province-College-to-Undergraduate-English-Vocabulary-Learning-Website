@@ -20,30 +20,34 @@ export function AIChatFAB() {
     y: typeof window !== 'undefined' ? window.innerHeight - 120 : 500,
   }));
   const dragging = useRef(false);
+  const dragMoved = useRef(false); // 是否真的移动了（区分点击和拖拽）
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const fabRef = useRef<HTMLButtonElement>(null);
   const initialized = useRef(false);
 
   // ---- 拖拽逻辑 ----
   const onTouchStart = (e: React.TouchEvent) => {
-    if (open) return; // 面板打开时不拖拽
     dragging.current = true;
+    dragMoved.current = false;
     dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, posX: pos.x, posY: pos.y };
   };
   const onTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current) return;
     const dx = e.touches[0].clientX - dragStart.current.x;
     const dy = e.touches[0].clientY - dragStart.current.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
     setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
   };
   const onTouchEnd = () => { dragging.current = false; };
   const onMouseDown = (e: React.MouseEvent) => {
-    if (open) return;
     dragging.current = true;
+    dragMoved.current = false;
     dragStart.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
     const onMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
-      setPos({ x: dragStart.current.posX + ev.clientX - dragStart.current.x, y: dragStart.current.posY + ev.clientY - dragStart.current.y });
+      const dx = ev.clientX - dragStart.current.x; const dy = ev.clientY - dragStart.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
+      setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
     };
     const onUp = () => { dragging.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
     window.addEventListener('mousemove', onMove);
@@ -122,7 +126,7 @@ export function AIChatFAB() {
       {/* 悬浮按钮 — 液态玻璃可拖动 */}
       <button
         ref={fabRef}
-        onClick={() => { if (!dragging.current) setOpen(v => !v); }}
+        onClick={() => { if (!dragMoved.current) setOpen(v => !v); }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
