@@ -13,46 +13,7 @@ export function AIChatFAB() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-
-  // 拖拽位置：初始右下角
-  const [pos, setPos] = useState(() => ({
-    x: typeof window !== 'undefined' ? window.innerWidth - 60 : 300,
-    y: typeof window !== 'undefined' ? window.innerHeight - 120 : 500,
-  }));
-  const dragging = useRef(false);
-  const dragMoved = useRef(false); // 是否真的移动了（区分点击和拖拽）
-  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
-  const fabRef = useRef<HTMLButtonElement>(null);
   const initialized = useRef(false);
-
-  // ---- 拖拽逻辑 ----
-  const onTouchStart = (e: React.TouchEvent) => {
-    dragging.current = true;
-    dragMoved.current = false;
-    dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, posX: pos.x, posY: pos.y };
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (!dragging.current) return;
-    const dx = e.touches[0].clientX - dragStart.current.x;
-    const dy = e.touches[0].clientY - dragStart.current.y;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
-    setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
-  };
-  const onTouchEnd = () => { dragging.current = false; };
-  const onMouseDown = (e: React.MouseEvent) => {
-    dragging.current = true;
-    dragMoved.current = false;
-    dragStart.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
-    const onMove = (ev: MouseEvent) => {
-      if (!dragging.current) return;
-      const dx = ev.clientX - dragStart.current.x; const dy = ev.clientY - dragStart.current.y;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
-      setPos({ x: dragStart.current.posX + dx, y: dragStart.current.posY + dy });
-    };
-    const onUp = () => { dragging.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
 
   // ---- 学习数据：仅加载一次 ----
   const { count: starredCount } = useStarred();
@@ -123,26 +84,22 @@ export function AIChatFAB() {
 
   return (
     <>
-      {/* 悬浮按钮 — 液态玻璃可拖动 */}
+      {/* 悬浮按钮 — 和番茄钟对称右下角 */}
       <button
-        ref={fabRef}
-        onClick={() => { if (!dragMoved.current) setOpen(v => !v); }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onMouseDown={onMouseDown}
-        className="liquid-glass liquid-glass-shine fixed z-[250] flex h-12 w-12 items-center justify-center rounded-full text-primary transition-all active:scale-95"
-        style={{ left: pos.x, top: pos.y }}
+        onClick={() => setOpen(v => !v)}
+        className="liquid-glass liquid-glass-shine fixed bottom-4 right-4 z-[250] flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
+        style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         aria-label="AI 学习助手"
       >
         {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+        <span className="text-sm text-primary font-medium">AI 助手</span>
       </button>
 
-      {/* 聊天面板 — 液态玻璃样式 */}
+      {/* 聊天面板 — 右下角弹出 */}
       {open && (
         <div
-          className="fixed z-[200] flex h-[400px] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
-          style={{ left: Math.max(8, Math.min(pos.x - 280, window.innerWidth - 336)), top: Math.max(8, Math.min(pos.y + 0, window.innerHeight - 416)), borderRadius: 'calc(var(--radius) + 12px)' }}
+          className="fixed bottom-20 right-4 z-[200] flex h-[400px] w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
+          style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
             <Sparkles className="h-4 w-4 text-primary" />
