@@ -20,6 +20,7 @@ import Quiz from "./pages/Quiz";
 import Confusables from "./pages/Confusables";
 import Login from "./pages/Login";
 import Account from "./pages/Account";
+import { AIChatFAB } from "@/components/AIChatFAB";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ function App() {
             </AnimatedRoutes>
             <PomodoroTimer />
           </main>
+          <AIChatFAB />
             </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
