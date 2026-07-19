@@ -21,12 +21,6 @@ function hasForbiddenWord(text: string): boolean {
   return FORBIDDEN_WORDS.some((w) => lower.includes(w.toLowerCase()))
 }
 
-function hasForbiddenWord(text: string): boolean {
-  if (!text) return false
-  const filtered = wc.filter(text)
-  return filtered !== text
-}
-
 // ============================================
 // 评论模块（仅登录用户可发表；读取公开）
 // 存储：backend/data/comments.json（与 users.json 同目录，零外部依赖）
