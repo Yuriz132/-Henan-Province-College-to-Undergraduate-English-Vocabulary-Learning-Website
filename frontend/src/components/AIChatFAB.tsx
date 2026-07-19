@@ -87,12 +87,15 @@ export function AIChatFAB() {
       {/* 悬浮按钮 — 右下角固定（和第一版一样） */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="liquid-glass liquid-glass-shine bottom-6 right-6 z-[250] flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
-        style={{ borderRadius: 'calc(var(--radius) + 12px)', position: 'fixed' }}
+        className="liquid-glass liquid-glass-shine bottom-6 right-6 z-[250] flex h-12 w-12 items-center justify-center rounded-full text-muted-foreground transition-all hover:text-primary active:scale-95"
+        style={{
+          position: 'fixed',
+          borderRadius: '50%',
+          boxShadow: '0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent), 0 2px 10px color-mix(in oklch, var(--primary) 30%, transparent), 0 0 16px color-mix(in oklch, var(--primary) 50%, transparent)',
+        }}
         aria-label="AI 学习助手"
       >
-        {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-        <span className="text-sm text-primary font-medium">AI 助手</span>
+        {open ? <X className="h-5 w-5 text-primary" /> : <Bot className="h-5 w-5 text-primary" />}
       </button>
 
       {/* 聊天面板 — 右下角弹出 */}
