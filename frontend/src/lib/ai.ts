@@ -7,10 +7,52 @@ export interface ChatOptions {
   max_tokens?: number;
   temperature?: number;
   signal?: AbortSignal;
+  /** 流式输出：提供 onChunk 回调则启用，每块文本增量 */
+  onChunk?: (text: string) => void;
 }
 
-/** 通用聊天/文本生成（走后端代理，自动带登录 token） */
+/** 通用聊天/文本生成（支持流式，走后端代理） */
 export async function aiChat(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
+  // 流式模式
+  if (opts.onChunk) {
+    const token = localStorage.getItem('auth_token');
+    const r = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({
+        messages,
+        model: opts.model,
+        max_tokens: opts.max_tokens,
+        temperature: opts.temperature,
+        stream: true,
+      }),
+      signal: opts.signal,
+    });
+    if (!r.ok) throw new Error(`AI ${r.status}`);
+    const reader = r.body?.getReader();
+    if (!reader) throw new Error('No stream');
+    const decoder = new TextDecoder();
+    let full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value, { stream: true });
+      // Agnes AI 返回 SSE: data: {...}\n\n
+      for (const line of text.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (payload === '[DONE]') continue;
+        try {
+          const delta: any = JSON.parse(payload);
+          const chunk = delta?.choices?.[0]?.delta?.content || '';
+          if (chunk) { full += chunk; opts.onChunk!(chunk); }
+        } catch {}
+      }
+    }
+    return full;
+  }
+
+  // 非流式
   const { data } = await apiClient.post<{ content: string; model: string }>('/ai/chat', {
     messages,
     model: opts.model,

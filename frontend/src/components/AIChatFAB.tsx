@@ -62,7 +62,7 @@ export function AIChatFAB() {
   const sysPrompt = useMemo(() => {
     const learnedWords = Array.from(known).map(id => allWords.find(w => w.id === id)?.word).filter(Boolean).slice(0, 30);
     const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
-    return `你是河南专升本英语 AI 学习助手。语气温暖、鼓励。
+    return `你是由菲哥（一位专升本开发者）创建的 AI 学习助手。语气温暖、鼓励。
 当前用户学习数据（已在页面加载时获取，对话过程中不会更新）：
 - 总词库：3459 词
 - 已复习：${totalReviewed} 词（${totalProgress}%）
@@ -99,14 +99,30 @@ export function AIChatFAB() {
     setInput('');
     setMsgs(prev => [...prev, { role: 'user', text: userMsg }]);
     setLoading(true);
+    // 先加一个空白的 AI 回复占位
+    setMsgs(prev => [...prev, { role: 'assistant', text: '' }]);
     try {
-      const res = await aiChat([
+      await aiChat([
         { role: 'system', content: sysPrompt },
         { role: 'user', content: userMsg }
-      ], { max_tokens: 600, temperature: 0.8 });
-      setMsgs(prev => [...prev, { role: 'assistant', text: res || '抱歉，请重试' }]);
+      ], {
+        max_tokens: 600, temperature: 0.8,
+        onChunk(chunk) {
+          setMsgs(prev => {
+            const copy = prev.slice();
+            const last = copy[copy.length - 1];
+            if (last?.role === 'assistant') copy[copy.length - 1] = { ...last, text: last.text + chunk };
+            return copy;
+          });
+        }
+      });
     } catch {
-      setMsgs(prev => [...prev, { role: 'assistant', text: '网络出错了，请稍后重试' }]);
+      setMsgs(prev => {
+        const copy = prev.slice();
+        const last = copy[copy.length - 1];
+        if (last?.role === 'assistant' && !last.text) copy[copy.length - 1] = { ...last, text: '网络出错了，请稍后重试' };
+        return copy;
+      });
     } finally { setLoading(false); }
   };
 

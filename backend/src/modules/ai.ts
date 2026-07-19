@@ -22,6 +22,7 @@ const chatSchema = z.object({
   model: z.string().optional(),
   max_tokens: z.number().int().min(1).max(4000).optional(),
   temperature: z.number().min(0).max(2).optional(),
+  stream: z.boolean().optional(),
 })
 
 aiRouter.post('/ai/chat', async (req: Request, res: Response) => {
@@ -32,21 +33,50 @@ aiRouter.post('/ai/chat', async (req: Request, res: Response) => {
   if (!parsed.success) {
     return res.status(400).json({ message: parsed.error.issues[0]?.message ?? '参数错误' })
   }
-  const { messages, model, max_tokens, temperature } = parsed.data
+  const { messages, model, max_tokens, temperature, stream } = parsed.data
   try {
+    const body: any = {
+      model: model || 'agnes-1.5-flash',
+      messages,
+      max_tokens: max_tokens || 500,
+      temperature: temperature ?? 0.7,
+    };
+    if (stream) body.stream = true;
+
     const r = await fetch(`${AGNES_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${AGNES_API_KEY}`,
       },
-      body: JSON.stringify({
-        model: model || 'agnes-1.5-flash',
-        messages,
-        max_tokens: max_tokens || 500,
-        temperature: temperature ?? 0.7,
-      }),
-    })
+      body: JSON.stringify(body),
+    });
+
+    if (stream) {
+      // 流式转发：逐块把 SSE 传回客户端
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+
+      const reader = r.body?.getReader();
+      if (!reader) { res.end(); return; }
+      const decoder = new TextDecoder();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const text = decoder.decode(value, { stream: true });
+          // Agnes AI 返回的是 SSE 格式，直接转发给客户端
+          res.write(text);
+        }
+      } catch (e) {
+        // 流中断
+      }
+      res.end();
+      return;
+    }
+
     if (!r.ok) {
       const txt = await r.text()
       return res.status(502).json({ message: `AI 服务错误：${r.status}`, detail: txt.slice(0, 300) })
