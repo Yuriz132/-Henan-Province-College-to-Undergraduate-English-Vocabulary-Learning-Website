@@ -4,26 +4,11 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { z } from 'zod'
 import { authMiddleware } from './auth'
-import Path from 'path'
 
 // ============================================
 // 违禁词过滤（使用 DFA 开源库 sensitive-word-filter，支持中英文）
 // ============================================
 const wc = require('sensitive-word-filter')
-
-const CUSTOM_BAD_WORDS = Path.join(__dirname, '..', '..', 'config', 'bad-words.txt')
-
-// 添加自定义违禁词（文件每行一个，UTF-8）
-try {
-  const fs = require('fs')
-  if (fs.existsSync(CUSTOM_BAD_WORDS)) {
-    const lines = fs.readFileSync(CUSTOM_BAD_WORDS, 'utf-8').split(/\r?\n/).filter(Boolean)
-    for (const w of lines) wc.addWord(w.trim())
-  }
-} catch {}
-wc.addWord('fuck')
-wc.addWord('shit')
-wc.addWord('damn')
 
 function hasForbiddenWord(text: string): boolean {
   if (!text) return false
