@@ -14,18 +14,15 @@ export function AIChatFAB() {
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // 拖拽位置：初始在右边距顶部 1/3 处
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  // 拖拽位置：初始在右边距顶部 1/3 处（直接用计算值，不用 useEffect 延迟）
+  const [pos, setPos] = useState(() => ({
+    x: typeof window !== 'undefined' ? window.innerWidth - 60 : 300,
+    y: typeof window !== 'undefined' ? Math.round(window.innerHeight / 3) : 200,
+  }));
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const fabRef = useRef<HTMLButtonElement>(null);
   const initialized = useRef(false);
-
-  // 初始化位置（右边，顶部 1/3）
-  useEffect(() => {
-    const h = window.innerHeight;
-    setPos({ x: window.innerWidth - 64, y: Math.round(h / 3) });
-  }, []);
 
   // ---- 拖拽逻辑 ----
   const onTouchStart = (e: React.TouchEvent) => {
