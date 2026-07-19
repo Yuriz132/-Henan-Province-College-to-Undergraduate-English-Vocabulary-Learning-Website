@@ -84,10 +84,10 @@ export function AIChatFAB() {
 
   return (
     <>
-      {/* 悬浮按钮 — 左下角，和番茄钟上下叠放 */}
+      {/* 悬浮按钮 — 右下角固定（和第一版一样） */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="liquid-glass liquid-glass-shine fixed bottom-20 left-4 z-[250] flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
+        className="liquid-glass liquid-glass-shine fixed bottom-6 right-6 z-[250] flex items-center gap-2 rounded-full px-4 py-3 text-muted-foreground transition-all hover:text-foreground active:scale-95"
         style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         aria-label="AI 学习助手"
       >
@@ -95,10 +95,10 @@ export function AIChatFAB() {
         <span className="text-sm text-primary font-medium">AI 助手</span>
       </button>
 
-      {/* 聊天面板 — 左下角弹出 */}
+      {/* 聊天面板 — 右下角弹出 */}
       {open && (
         <div
-          className="fixed bottom-36 left-4 z-[200] flex h-[400px] w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
+          className="fixed bottom-24 right-6 z-[200] flex h-[400px] w-[340px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border border-white/15 bg-[oklch(0.22_0.04_270/0.96)] shadow-2xl backdrop-blur-xl"
           style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">

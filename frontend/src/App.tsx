@@ -63,8 +63,8 @@ function App() {
               <Route path="*" data-genie-key="NotFound" data-genie-title="Not Found" element={<PageTransition transition="fadethrough"><NotFound /></PageTransition>} />
             </AnimatedRoutes>
             <PomodoroTimer />
-            <AIChatFAB />
           </main>
+          <AIChatFAB />
             </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
