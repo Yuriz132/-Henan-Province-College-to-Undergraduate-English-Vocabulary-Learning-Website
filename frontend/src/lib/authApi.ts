@@ -1,7 +1,7 @@
 import apiClient from './api-client';
 import type { StudyPlan } from '@/lib/studyPlans';
 
-/** 生成的 AI 文章（存入「我的题库」） */
+/** 生成的 AI 文章（存入「我的收藏」） */
 export interface SavedArticle {
   id: string
   title: string

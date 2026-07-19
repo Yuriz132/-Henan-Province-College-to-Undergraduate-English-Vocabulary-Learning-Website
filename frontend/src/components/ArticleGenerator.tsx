@@ -79,7 +79,7 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
         title: theme.trim() || undefined,
       })
       setResult(out)
-      // 自动存入「我的题库」（本地 + 已登录时同步云端）
+      // 自动存入「我的收藏」（本地 + 已登录时同步云端）
       const article: SavedArticle = {
         id: makeArticleId(),
         title: out.title || 'Untitled',
@@ -165,7 +165,7 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
                   <h3 className="text-base font-bold text-foreground">{result.title}</h3>
                   {savedId && (
                     <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
-                      <Check className="h-3 w-3" /> 已存入题库
+                      <Check className="h-3 w-3" /> 已存入收藏
                     </span>
                   )}
                 </div>
@@ -194,12 +194,12 @@ export function ArticleGenerator({ open, onOpenChange }: Props) {
                 <Button
                   onClick={() => {
                     onOpenChange(false)
-                    navigate('/starred?tab=articles')
+                    navigate('/starred?tab=favorites')
                   }}
                   variant="ghost"
                   className="text-primary"
                 >
-                  <FileText className="h-4 w-4" /> 我的题库
+                  <FileText className="h-4 w-4" /> 我的收藏
                 </Button>
                 <Button onClick={() => onOpenChange(false)} variant="ghost">
                   <X className="h-4 w-4" /> 关闭

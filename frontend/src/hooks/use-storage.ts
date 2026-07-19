@@ -174,7 +174,7 @@ export function useStudyPlans() {
   return { plans, addPlan, removePlan, toggleTask };
 }
 
-/** 已生成文章（我的题库）：本地存储 + 登录后同步到云端 */
+/** 已生成文章（我的收藏）：本地存储 + 登录后同步到云端 */
 function readSavedArticles(): SavedArticle[] {
   try {
     const raw = localStorage.getItem(SAVED_ARTICLES_KEY);

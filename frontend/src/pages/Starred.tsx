@@ -7,7 +7,7 @@ import { WordCard } from '@/components/WordCard';
 import { Flashcard } from '@/components/Flashcard';
 import { FlyIn, Stagger } from '@/components/MotionPrimitives';
 
-type Tab = 'starred' | 'known' | 'articles';
+type Tab = 'starred' | 'known' | 'favorites';
 
 function formatDate(ts: number): string {
   try {
@@ -27,7 +27,7 @@ export default function Starred() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [params, setParams] = useSearchParams();
   const raw = params.get('tab')
-  const tab: Tab = raw === 'known' ? 'known' : raw === 'articles' ? 'articles' : 'starred';
+  const tab: Tab = raw === 'known' ? 'known' : raw === 'favorites' ? 'favorites' : 'starred';
 
   const starredWords = useMemo(
     () => starredIds.map((id) => getWordById(id)).filter(Boolean) as NonNullable<ReturnType<typeof getWordById>>[],
@@ -66,10 +66,10 @@ export default function Starred() {
               <Star className="h-6 w-6 text-warning" /> 生词本
             </h1>
             <p className="text-muted-foreground">
-              已收藏 {count} 个 · 已掌握 {knownCount} 个 · 文章 {articleCount} 篇
+              已收藏 {count} 个 · 已掌握 {knownCount} 个 · 收藏 {articleCount} 篇
             </p>
           </div>
-          {tab !== 'articles' && words.length > 0 && (
+          {tab !== 'favorites' && words.length > 0 && (
             <div className="flex gap-2">
               <button
                 onClick={() => setFlashcardMode(true)}
@@ -87,7 +87,7 @@ export default function Starred() {
               )}
             </div>
           )}
-          {tab === 'articles' && articleCount > 0 && (
+          {tab === 'favorites' && articleCount > 0 && (
             <button
               onClick={() => { if (window.confirm('确认清空所有已生成文章？')) clearArticles(); }}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
@@ -116,20 +116,20 @@ export default function Starred() {
             <Check className="h-3.5 w-3.5" /> 已掌握 ({knownCount})
           </button>
           <button
-            onClick={() => switchTab('articles')}
+            onClick={() => switchTab('favorites')}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all ${
-              tab === 'articles' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              tab === 'favorites' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <FileText className="h-3.5 w-3.5" /> 我的文章 ({articleCount})
+            <FileText className="h-3.5 w-3.5" /> 我的收藏 ({articleCount})
           </button>
         </div>
       </FlyIn>
 
-      {tab === 'articles' ? (
+      {tab === 'favorites' ? (
         articleCount === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground/70">
-            还没有生成的文章。去首页点「AI 文章生成」，用你已掌握的单词写一篇英语短文，会自动存到这里～
+            还没有生成的文章。去首页点「AI 文章生成」，用你已掌握的单词写一篇英语短文，会自动存入「我的收藏」～
           </p>
         ) : (
           <div className="space-y-3">
