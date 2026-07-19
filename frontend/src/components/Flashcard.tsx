@@ -32,6 +32,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const [cardExit, setCardExit] = useState(false); // 卡片切换动画
   const [slideDir, setSlideDir] = useState<'up' | 'down' | 'left' | 'right'>('left');
   const [cardEnter, setCardEnter] = useState(false); // 新卡片入场动画
+  const [wordKey, setWordKey] = useState(0); // 单词切换 key（触发文字动画）
   // AI 单词解析
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDetail, setAiDetail] = useState<WordAIDetail | null>(null);
@@ -79,6 +80,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
     setTimeout(() => {
       setFlipped(false);
       setIndex((i) => (i + 1) % words.length);
+      setWordKey((k) => k + 1);
       setCardExit(false);
       setCardEnter(true);
       setTimeout(() => setCardEnter(false), 200);
@@ -291,25 +293,25 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           沉浸模式 · 上下滑动切换
         </div>
 
-        {/* 单词 */}
-        <h2
-          className="relative z-[2] text-center font-bold text-foreground text-gradient"
-          style={{ fontSize: 'calc(var(--font-size-display) * 1.3)', lineHeight: 1.1 }}
-        >
-          {current.word}
-        </h2>
+        {/* 单词 + 音标 + 释义 — 切换时文字动画 */}
+        <div key={wordKey} className="word-animate flex flex-col items-center">
+          <h2
+            className="relative z-[2] text-center font-bold text-foreground text-gradient"
+            style={{ fontSize: 'calc(var(--font-size-display) * 1.3)', lineHeight: 1.1 }}
+          >
+            {current.word}
+          </h2>
 
-        {/* 音标 */}
-        {current.phonetic && (
-          <p className="relative z-[2] mt-4 text-center font-mono text-xl text-muted-foreground">
-            {current.phonetic}
+          {current.phonetic && (
+            <p className="relative z-[2] mt-4 text-center font-mono text-xl text-muted-foreground">
+              {current.phonetic}
+            </p>
+          )}
+
+          <p className="relative z-[2] mt-3 text-center text-lg text-muted-foreground font-medium">
+            {current.meaning}
           </p>
-        )}
-
-        {/* 中文释义 */}
-        <p className="relative z-[2] mt-3 text-center text-lg text-muted-foreground font-medium">
-          {current.meaning}
-        </p>
+        </div>
 
         {/* 发音按钮 */}
         <button
