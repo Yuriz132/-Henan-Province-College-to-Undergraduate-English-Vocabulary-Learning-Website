@@ -562,6 +562,10 @@
   transition: transform 0.3s ease-in !important;
 }
 
+/* 用户自定义字体颜色（通过 CSS 变量从 Account 页控制） */
+:root { --user-font-color: #ffffff; }
+.text-foreground { color: var(--user-font-color) !important; }
+
 /* 卡片切出/入场动画 — 四方向 */
 .flashcard-exit-left { animation: cardSlideOutLeft 0.22s ease-out forwards; }
 .flashcard-exit-right { animation: cardSlideOutRight 0.22s ease-out forwards; }

@@ -128,8 +128,8 @@ const credentialsSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(3, '用户名至少 3 个字符')
-    .max(20, '用户名最多 20 个字符')
+    .min(2, '用户名至少 2 个字符')
+    .max(7, '用户名最多 7 个字符')
     .regex(/^[a-zA-Z0-9_]+$/, '用户名仅限字母、数字、下划线'),
   password: z.string().min(6, '密码至少 6 位').max(64, '密码过长'),
 })

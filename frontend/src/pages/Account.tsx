@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, LogOut, Shield, AlertCircle, UploadCloud, Check, Image as ImageIcon, X } from 'lucide-react';
+import { User, Lock, LogOut, Shield, AlertCircle, UploadCloud, Check, Image as ImageIcon, X, Palette } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiChangePassword } from '@/lib/authApi';
 import { FlyIn } from '@/components/MotionPrimitives';
@@ -64,13 +64,25 @@ export default function Account() {
   // 壁纸
   const [wp, setWp] = useState<string>('');
   const wpFileRef = useRef<HTMLInputElement>(null);
+  // 字体颜色
+  const FC_KEY = 'liquid-words:fontColor';
+  const [fontColor, setFontColor] = useState<string>(() => localStorage.getItem(FC_KEY) || '#ffffff');
 
-  // 挂载时从 localStorage 恢复
+  // 挂载时恢复壁纸和字体颜色
   useEffect(() => {
     const saved = localStorage.getItem(WP_KEY) || '';
     setWp(saved);
     applyWallpaper(saved);
+    // 字体颜色
+    const fc = localStorage.getItem(FC_KEY) || '#ffffff';
+    document.documentElement.style.setProperty('--user-font-color', fc);
   }, []);
+
+  const handleFontColor = (color: string) => {
+    setFontColor(color);
+    document.documentElement.style.setProperty('--user-font-color', color);
+    localStorage.setItem(FC_KEY, color);
+  };
 
   const handleWpFile = async (file: File) => {
     if (!file) return;
@@ -243,6 +255,28 @@ export default function Account() {
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleWpFile(e.target.files[0])}
           />
+        </div>
+
+        {/* 字体颜色 */}
+        <div className="liquid-glass mb-3 rounded-2xl p-4">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+            <Palette className="h-4 w-4 text-primary" /> 字体颜色
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={fontColor}
+              onChange={(e) => handleFontColor(e.target.value)}
+              className="h-10 w-16 cursor-pointer rounded-lg border border-white/10 bg-white/5"
+            />
+            <span className="text-xs text-muted-foreground">{fontColor}</span>
+            <button
+              onClick={() => handleFontColor('#ffffff')}
+              className="rounded-full bg-white/10 px-3 py-1 text-xs text-muted-foreground hover:bg-white/20"
+            >
+              恢复默认
+            </button>
+          </div>
         </div>
 
         {/* 退出登录 */}
