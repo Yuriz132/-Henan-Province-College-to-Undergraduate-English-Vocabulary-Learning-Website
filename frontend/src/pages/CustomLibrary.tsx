@@ -5,6 +5,7 @@ import { useCustomWords } from '@/hooks/use-custom-words';
 import type { CustomWord } from '@/types/word';
 import { speakWord } from '@/lib/speak';
 import { FlyIn, Stagger } from '@/components/MotionPrimitives';
+import { AIImportPanel } from '@/components/AIImportPanel';
 
 /** 解析批量导入文本：每行一个单词
  *  支持格式（用竖线 | 或制表符分隔，音标可省略）：
@@ -320,6 +321,9 @@ function ListDetail({ list, onBack, onRename, onDelete, onAddWord, onAddWords, o
           <FileText className="h-3.5 w-3.5" /> {showImport ? '收起批量导入' : '批量导入（一键粘贴多词）'}
         </button>
       </div>
+
+      {/* AI 智能导入（上传图片/拍照） */}
+      <AIImportPanel onImport={onAddWords} />
 
       {/* 批量导入 */}
       {showImport && (

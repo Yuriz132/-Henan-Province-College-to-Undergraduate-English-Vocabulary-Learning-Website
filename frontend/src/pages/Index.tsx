@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles } from 'lucide-react';
+import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain } from 'lucide-react';
 import { allWords } from '@/lib/words-data';
 import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
 import { StudyPlans } from '@/components/StudyPlans';
 import { StudyChart } from '@/components/StudyChart';
+import { PersonalSummary } from '@/components/PersonalSummary';
+import { ArticleGenerator } from '@/components/ArticleGenerator';
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import apiClient from '@/lib/api-client';
 import { aiChat } from '@/lib/ai';
@@ -48,6 +50,8 @@ export default function Index() {
   const [planOpen, setPlanOpen] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
   const [chartOpen, setChartOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [articleOpen, setArticleOpen] = useState(false);
   const [motto, setMotto] = useState<string>('开启你的专升本词汇之旅，每一步都在靠近目标 ✨');
 
   const totalReviewed = Object.values(progress).reduce((sum, p) => sum + p.reviewed, 0);
@@ -185,6 +189,22 @@ export default function Index() {
         })}
       </div>
 
+      {/* AI 快捷入口 */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setSummaryOpen(true)}
+          className="liquid-glass liquid-glass-shine flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+        >
+          <Brain className="h-3.5 w-3.5" /> AI 个人总结
+        </button>
+        <button
+          onClick={() => setArticleOpen(true)}
+          className="liquid-glass liquid-glass-shine flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs text-primary transition-all hover:-translate-y-0.5 active:scale-95"
+        >
+          <FileText className="h-3.5 w-3.5" /> AI 文章生成
+        </button>
+      </div>
+
       {/* 折线图弹窗 */}
       <StudyChart
         data={last30days}
@@ -192,6 +212,12 @@ export default function Index() {
         open={chartOpen}
         onOpenChange={setChartOpen}
       />
+
+      {/* AI 个人总结弹窗 */}
+      <PersonalSummary open={summaryOpen} onOpenChange={setSummaryOpen} />
+
+      {/* AI 文章生成弹窗 */}
+      <ArticleGenerator open={articleOpen} onOpenChange={setArticleOpen} />
 
       {/* 学习计划 */}
       <FlyIn delay={0.08}>
