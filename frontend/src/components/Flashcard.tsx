@@ -233,7 +233,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const backContent = frontIsEn ? (
     <>
       <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{backLabel}</div>
-      <h3 className="relative z-[2] mb-2 text-center text-2xl font-bold text-foreground">{current.word}</h3>
+      <h3
+        className="relative z-[2] mb-2 max-w-full text-center font-bold text-foreground break-words"
+        style={{ fontSize: `${current.word.length > 14 ? '1.1rem' : current.word.length > 10 ? '1.4rem' : current.word.length > 7 ? '1.7rem' : '1.875rem'}`, lineHeight: 1.1 }}
+      >
+        {current.word}
+      </h3>
       {current.phonetic && (
         <p className="relative z-[2] mb-3 text-center font-mono text-base text-muted-foreground">{current.phonetic}</p>
       )}
@@ -294,10 +299,10 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
         </div>
 
         {/* 单词 + 音标 + 释义 — 切换时文字动画 */}
-        <div key={wordKey} className="word-animate flex flex-col items-center">
+        <div key={wordKey} className="word-animate flex flex-col items-center px-2 w-full max-w-full">
           <h2
-            className="relative z-[2] text-center font-bold text-foreground text-gradient"
-            style={{ fontSize: 'calc(var(--font-size-display) * 1.3)', lineHeight: 1.1 }}
+            className="relative z-[2] max-w-full text-center font-bold text-foreground text-gradient break-words"
+            style={{ fontSize: `calc(var(--font-size-display) * ${current.word.length > 14 ? 0.6 : current.word.length > 10 ? 0.8 : current.word.length > 7 ? 1.0 : 1.3})`, lineHeight: 1.1 }}
           >
             {current.word}
           </h2>
