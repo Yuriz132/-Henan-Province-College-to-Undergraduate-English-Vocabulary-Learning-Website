@@ -1,20 +1,37 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
 import { LiquidGlass } from '@/components/LiquidGlass';
-import { aiChat } from '@/lib/ai';
+import { aiChat, type ChatMessage } from '@/lib/ai';
 import { useStarred, useKnown, useStudyPlans } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
 import { allWords } from '@/lib/words-data';
 
 interface ChatMsg { role: 'user' | 'assistant'; text: string }
 
+const AI_CHAT_KEY = 'liquid-words:ai-chat';
+function loadMsgs(): ChatMsg[] {
+  try {
+    const raw = localStorage.getItem(AI_CHAT_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr)
+      ? arr.filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string')
+      : [];
+  } catch { return []; }
+}
+function saveMsgs(list: ChatMsg[]) {
+  try { localStorage.setItem(AI_CHAT_KEY, JSON.stringify(list.slice(-20))); } catch {}
+}
+
 export function AIChatFAB() {
   const [open, setOpen] = useState(false);
-  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>(() => loadMsgs());
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+  const msgsRef = useRef<ChatMsg[]>(msgs);
+  msgsRef.current = msgs;
 
   // ---- 学习数据：仅加载一次 ----
   const { count: starredCount } = useStarred();
@@ -25,7 +42,7 @@ export function AIChatFAB() {
   const sysPrompt = useMemo(() => {
     const learnedWords = Array.from(known).map(id => allWords.find(w => w.id === id)?.word).filter(Boolean).slice(0, 30);
     const totalProgress = allWords.length > 0 ? Math.round((totalReviewed / allWords.length) * 100) : 0;
-    return `你是一位温暖、鼓励的 AI 学习助手，专注于河南专升本英语词汇学习。
+    return `你是一位温暖、鼓励的 AI 学习助手，专注于河南专升本英语词汇学习，由亚菲（一位专升本开发者）打造。
 当前用户学习数据（已在页面加载时获取，对话过程中不会更新）：
 - 总词库：3459 词
 - 已复习：${totalReviewed} 词（${totalProgress}%）
@@ -37,17 +54,20 @@ export function AIChatFAB() {
 - 学习计划：${plans.map(p => `${p.title}(${p.type}目标${p.target})`).join(', ') || '暂无'}
 回答规则：
 1. 当用户询问学习计划或每日任务时，默认推荐每日学习 45 个新单词 + 50 个旧单词复习；结合用户已掌握量、连续天数和日均进度灵活调整。
-2. 若用户问起你的开发者/作者，可顺带提及是菲哥（一位专升本开发者）做的，不必主动强调。
-3. 如果用户问英语单词，给出中文释义+例句+形近词+短语。
-4. 回答简洁，200 字以内。`;
+2. 记住你和这位用户之前聊过的内容，保持上下文连贯，可引用之前的对话来帮助他。
+3. 若用户问起你的开发者/作者，可顺带提及是亚菲（一位专升本开发者）做的，不必主动强调。
+4. 不要声明自己由哪个具体的 AI 模型驱动，也不要强调自己是“大模型 / AI 模型”；以『学习助手』的身份自然地帮助用户。
+5. 如果用户问英语单词，给出中文释义+例句+形近词+短语。
+6. 回答简洁，200 字以内。`;
   }, [known, starredCount, knownCount, totalReviewed, streak, dailyAverage, plans]);
 
-  // 首次打开：只用预热的一次性欢迎消息
+  // 首次打开：仅在没有历史对话时，展示一次性欢迎消息
   const initWelcome = useCallback(() => {
     if (initialized.current) return;
     initialized.current = true;
+    if (msgsRef.current.length > 0) return; // 已有历史，不重复欢迎
     // 离线模板欢迎语（不调 AI，秒出）
-    const welcome = `你好！我是 AI 学习助手 🤓\n\n我已加载你的学习数据：\n📚 已复习 ${totalReviewed} 词 · ⭐ 收藏 ${starredCount} · ✅ 掌握 ${knownCount}\n🔥 连续 ${streak} 天 · 📊 日均 ${dailyAverage} 词\n\n默认建议每天学习 45 个新词、复习 50 个旧词，可根据你的进度调整。\n\n有什么学习问题直接问我！`;
+    const welcome = `你好！我是你的 AI 学习助手 🤓\n\n我会记住我们聊过的内容，越聊越懂你的进度。\n\n我已加载你的学习数据：\n📚 已复习 ${totalReviewed} 词 · ⭐ 收藏 ${starredCount} · ✅ 掌握 ${knownCount}\n🔥 连续 ${streak} 天 · 📊 日均 ${dailyAverage} 词\n\n默认建议每天学习 45 个新词、复习 50 个旧词，可根据你的进度调整。\n\n有什么学习问题直接问我！`;
     setMsgs([{ role: 'assistant', text: welcome }]);
   }, [totalReviewed, starredCount, knownCount, streak, dailyAverage]);
 
@@ -58,32 +78,39 @@ export function AIChatFAB() {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput('');
-    setMsgs(prev => [...prev, { role: 'user', text: userMsg }]);
+    const userObj: ChatMsg = { role: 'user', text: userMsg };
+    const placeholder: ChatMsg = { role: 'assistant', text: '' };
+    const base = msgsRef.current;
+    const next = [...base, userObj, placeholder];
+    msgsRef.current = next;
+    setMsgs(next);
     setLoading(true);
-    // 先加一个空白的 AI 回复占位
-    setMsgs(prev => [...prev, { role: 'assistant', text: '' }]);
     try {
-      await aiChat([
-        { role: 'system', content: sysPrompt },
-        { role: 'user', content: userMsg }
-      ], {
-        max_tokens: 600, temperature: 0.8,
-        onChunk(chunk) {
-          setMsgs(prev => {
-            const copy = prev.slice();
-            const last = copy[copy.length - 1];
-            if (last?.role === 'assistant') copy[copy.length - 1] = { ...last, text: last.text + chunk };
-            return copy;
-          });
+      // 带上完整历史（系统提示 + 之前所有对话），让 AI 记住上下文
+      const history: ChatMessage[] = [...base, userObj].map(m => ({ role: m.role, content: m.text }));
+      const full = await aiChat(
+        [{ role: 'system', content: sysPrompt }, ...history],
+        {
+          max_tokens: 600, temperature: 0.8,
+          onChunk(chunk) {
+            setMsgs(prev => {
+              const copy = prev.slice();
+              const last = copy[copy.length - 1];
+              if (last?.role === 'assistant') copy[copy.length - 1] = { ...last, text: last.text + chunk };
+              return copy;
+            });
+          }
         }
-      });
+      );
+      const finalMsgs: ChatMsg[] = [...base, userObj, { role: 'assistant', text: full }];
+      msgsRef.current = finalMsgs;
+      setMsgs(finalMsgs);
+      saveMsgs(finalMsgs);
     } catch {
-      setMsgs(prev => {
-        const copy = prev.slice();
-        const last = copy[copy.length - 1];
-        if (last?.role === 'assistant' && !last.text) copy[copy.length - 1] = { ...last, text: '网络出错了，请稍后重试' };
-        return copy;
-      });
+      const errMsgs: ChatMsg[] = [...base, userObj, { role: 'assistant', text: '网络出错了，请稍后重试' }];
+      msgsRef.current = errMsgs;
+      setMsgs(errMsgs);
+      saveMsgs(errMsgs);
     } finally { setLoading(false); }
   };
 
