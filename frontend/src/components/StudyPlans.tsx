@@ -378,6 +378,18 @@ export function StudyPlans({ open, onOpenChange }: StudyPlansProps) {
             {type === 'words' && (
               <div className="space-y-1.5">
                 <Label htmlFor="plan-target">目标单词数</Label>
+                <div className="mb-1 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTarget(45)}
+                    className={`rounded-full px-3 py-1 text-xs transition-all ${target === 45 ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-muted-foreground hover:bg-white/20'}`}
+                  >📖 新学 45词</button>
+                  <button
+                    type="button"
+                    onClick={() => setTarget(50)}
+                    className={`rounded-full px-3 py-1 text-xs transition-all ${target === 50 ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-muted-foreground hover:bg-white/20'}`}
+                  >🔄 复习 50词</button>
+                </div>
                 <Input
                   id="plan-target"
                   type="number"
