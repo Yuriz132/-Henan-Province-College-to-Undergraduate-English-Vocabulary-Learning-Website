@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
+import { LiquidGlass } from '@/components/LiquidGlass';
 import { aiChat } from '@/lib/ai';
 import { useStarred, useKnown, useStudyPlans } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
@@ -85,7 +86,8 @@ export function AIChatFAB() {
   return (
     <>
       {/* 悬浮按钮 — 右下角固定（和第一版一样） */}
-      <button
+      <LiquidGlass
+        as="button"
         onClick={() => setOpen(v => !v)}
         className="liquid-glass liquid-glass-shine bottom-6 right-6 z-[250] flex h-12 w-12 items-center justify-center rounded-full text-muted-foreground transition-all hover:text-primary active:scale-95"
         style={{
@@ -96,7 +98,7 @@ export function AIChatFAB() {
         aria-label="AI 学习助手"
       >
         {open ? <X className="h-5 w-5 text-primary" /> : <Bot className="h-5 w-5 text-primary" />}
-      </button>
+      </LiquidGlass>
 
       {/* 聊天面板 — 右下角弹出 */}
       {open && (
