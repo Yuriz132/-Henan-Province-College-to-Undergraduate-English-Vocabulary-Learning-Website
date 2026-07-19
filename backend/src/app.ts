@@ -9,6 +9,7 @@ import { systemRouter } from './modules/system'
 import { authRouter } from './modules/auth'
 import { commentsRouter } from './modules/comments'
 import { aiRouter } from './modules/ai'
+import { leaderboardRouter } from './modules/leaderboard'
 // ============================================
 // Add your domain module imports here
 // ============================================
@@ -44,6 +45,9 @@ export const createApp = (): Application => {
 
   // AI 代理（持有 AGNES_API_KEY）
   app.use(env.API_PREFIX, aiRouter)
+
+  // 排行榜（公开）
+  app.use(env.API_PREFIX, leaderboardRouter)
 
   // ============================================
   // Add your domain module routes here

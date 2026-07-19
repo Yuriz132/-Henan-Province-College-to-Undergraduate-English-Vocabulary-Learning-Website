@@ -4,6 +4,7 @@ import { User, Lock, LogOut, Shield, AlertCircle, UploadCloud, Check, Image as I
 import { useAuth } from '@/context/AuthContext';
 import { apiChangePassword } from '@/lib/authApi';
 import { FlyIn } from '@/components/MotionPrimitives';
+import { Leaderboard } from '@/components/Leaderboard';
 
 const WP_KEY = 'liquid-words:wallpaper';
 
@@ -147,6 +148,9 @@ export default function Account() {
   return (
     <div className="mx-auto max-w-md px-4 py-8 sm:px-6">
       <FlyIn>
+        <div className="mb-4">
+          <Leaderboard />
+        </div>
         <div className="liquid-glass mb-6 rounded-2xl p-6">
           {/* 用户信息 */}
           <div className="mb-6 flex items-center gap-3">

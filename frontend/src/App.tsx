@@ -17,7 +17,6 @@ import NotFound from "./pages/NotFound";
 import CustomLibrary from "./pages/CustomLibrary";
 import CustomFlashcards from "./pages/CustomFlashcards";
 import Quiz from "./pages/Quiz";
-import Confusables from "./pages/Confusables";
 import Login from "./pages/Login";
 import Account from "./pages/Account";
 import { AIChatFAB } from "@/components/AIChatFAB";
@@ -55,7 +54,6 @@ function App() {
               <Route path="/custom/:listId" data-genie-title="词库详情" data-genie-key="CustomList" element={<PageTransition transition="fadethrough"><CustomLibrary /></PageTransition>} />
               <Route path="/flashcards/custom/:listId" data-genie-title="自定义翻卡" data-genie-key="CustomFlashcards" element={<PageTransition transition="fadethrough"><CustomFlashcards /></PageTransition>} />
               <Route path="/quiz" data-genie-title="听音写词" data-genie-key="Quiz" element={<PageTransition transition="fadethrough"><Quiz /></PageTransition>} />
-              <Route path="/confusables" data-genie-title="近义词辨析" data-genie-key="Confusables" element={<PageTransition transition="fadethrough"><Confusables /></PageTransition>} />
               <Route path="/search" data-genie-title="搜索" data-genie-key="Search" element={<PageTransition transition="fadethrough"><SearchPage /></PageTransition>} />
               <Route path="/starred" data-genie-title="生词本" data-genie-key="Starred" element={<PageTransition transition="fadethrough"><Starred /></PageTransition>} />
               <Route path="/login" data-genie-title="登录" data-genie-key="Login" element={<PageTransition transition="fadethrough"><Login /></PageTransition>} />
