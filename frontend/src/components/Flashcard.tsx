@@ -504,36 +504,59 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
                 <Loader2 className="h-4 w-4 animate-spin text-primary" /> AI 正在解析…
               </div>
             ) : aiDetail ? (
-              <div className="space-y-2.5">
-                {aiDetail.simpleDef && (
+              <div className="space-y-3">
+                {/* 中文释义（核心） */}
+                {aiDetail.cnMeaning && (
                   <div>
-                    <span className="text-xs font-medium text-primary">释义</span>
-                    <p className="mt-0.5 text-foreground/90">{aiDetail.simpleDef}</p>
+                    <div className="text-xs font-medium text-primary">中文释义</div>
+                    <p className="mt-0.5 text-base font-semibold text-foreground">{aiDetail.cnMeaning}</p>
                   </div>
                 )}
+                {/* 英文释义 */}
+                {aiDetail.enDef && (
+                  <div>
+                    <div className="text-xs font-medium text-primary">英文</div>
+                    <p className="mt-0.5 text-sm italic text-foreground/80">{aiDetail.enDef}</p>
+                  </div>
+                )}
+                {/* 例句 + 中文翻译 */}
+                {aiDetail.example && (
+                  <div>
+                    <div className="text-xs font-medium text-primary">例句</div>
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">{aiDetail.example}</p>
+                  </div>
+                )}
+                {/* 形近词 + 中文 */}
                 {aiDetail.similarWords?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-primary">形近词（河南专升本常考）</span>
+                    <div className="text-xs font-medium text-primary">形近词（河南专升本常考）</div>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {aiDetail.similarWords.map((w, i) => (
-                        <span key={i} className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs text-primary">{w}</span>
+                      {aiDetail.similarWords.map((s, i) => (
+                        <span key={i} className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                          {s.word}<span className="ml-1 text-foreground/60">{s.cn}</span>
+                        </span>
                       ))}
                     </div>
                   </div>
                 )}
+                {/* 常用短语 + 中文 */}
                 {aiDetail.phrases?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-primary">常用短语</span>
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className="text-xs font-medium text-primary">常用短语</div>
+                    <div className="mt-1 space-y-0.5">
                       {aiDetail.phrases.map((p, i) => (
-                        <span key={i} className="rounded-md bg-white/5 px-1.5 py-0.5 text-xs text-foreground/80">{p}</span>
+                        <div key={i} className="text-xs text-foreground/80">
+                          <span className="text-foreground">{p.en}</span>
+                          <span className="ml-1.5 text-muted-foreground">/ {p.cn}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
+                {/* 时态/词形变化 */}
                 {aiDetail.tenses?.length > 0 && (
                   <div>
-                    <span className="text-xs font-medium text-primary">时态变形</span>
+                    <div className="text-xs font-medium text-primary">时态变形</div>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {aiDetail.tenses.map((t, i) => (
                         <span key={i} className="rounded-md bg-accent/10 px-1.5 py-0.5 text-xs text-accent">{t}</span>

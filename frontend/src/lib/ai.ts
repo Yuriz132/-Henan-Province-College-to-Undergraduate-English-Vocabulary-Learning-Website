@@ -93,31 +93,72 @@ export async function aiGenerateArticle(opts: {
     return { title: opts.title || 'Article', content: text, usedWords: [] };
   }
 }
-/** 解析单词详情：简易英文释义、形近词、短语、时态 */
+/** 解析单词详情：专升本考试风格，含中文释义+例句+形近词+短语+时态 */
 export interface WordAIDetail {
-  simpleDef: string;
-  similarWords: string[];
-  phrases: string[];
+  /** 中文精炼释义（6-12 字） */
+  cnMeaning: string;
+  /** 英文简短释义（10 词以内） */
+  enDef: string;
+  /** 专升本难度例句 + 中文翻译 */
+  example: string;
+  /** 形近词 + 中文（河南专升本常考） */
+  similarWords: { word: string; cn: string }[];
+  /** 常用短语 + 中文 */
+  phrases: { en: string; cn: string }[];
+  /** 时态/词形变化（不规则动词才填） */
   tenses: string[];
 }
 
+const EMPTY_DETAIL: WordAIDetail = {
+  cnMeaning: '',
+  enDef: '',
+  example: '',
+  similarWords: [],
+  phrases: [],
+  tenses: [],
+};
+
 export async function aiExplainWord(word: string, meaning: string): Promise<WordAIDetail> {
-  const sys = `你是专升本英语老师。分析单词，输出 JSON：
+  const sys = `你是一位经验丰富的河南专升本英语老师。请分析单词，**严格**输出 JSON，**不要包含 JSON 之外的任何文字**。
+
+字段要求：
+- cnMeaning：中文精炼释义，6-12 字（如"成年男性"），必须是中文
+- enDef：英文简短释义，10 词以内
+- example：一个专升本难度的英文例句，附中文翻译，格式 "英文。/ 中文。"
+- similarWords：3-5 个形近词（视觉相似），每个必须带中文含义，格式 [{"word":"woman","cn":"女人"}]
+- phrases：3-5 个常用短语/固定搭配，每个必须带中文翻译
+- tenses：如果是不规则动词，列出过去式/过去分词/现在分词；规则变化或名词则填空数组 []
+
+输出示例（仅作格式参考，含义要针对输入单词）：
 {
-  "simpleDef": "简易英文解释（20词内）",
-  "similarWords": ["形近词", ...]（河南专升本常考形近词，最多5个）,
-  "phrases": ["短语", ...]（常见搭配，最多5个）,
-  "tenses": ["过去式", ...]（不规则变形）
-}
-只返回 JSON。`;
+  "cnMeaning": "成年男人",
+  "enDef": "an adult male human",
+  "example": "A man is waiting at the door. / 一个男人在门口等着。",
+  "similarWords": [{"word":"woman","cn":"女人"},{"word":"many","cn":"许多"}],
+  "phrases": [{"en":"a young man","cn":"年轻人"}],
+  "tenses": []
+}`;
   const text = await aiChat([
     { role: 'system', content: sys },
-    { role: 'user', content: `单词：${word}，中文释义：${meaning}` }
-  ], { max_tokens: 600, temperature: 0.5 });
+    { role: 'user', content: `单词：${word}\n中文释义参考：${meaning || '无'}\n请输出 JSON。` }
+  ], { model: 'agnes-2.0-flash', max_tokens: 1000, temperature: 0.3 });
   try {
     const m = text.match(/\{[\s\S]*\}/);
-    return m ? JSON.parse(m[0]) : { simpleDef: '', similarWords: [], phrases: [], tenses: [] };
+    if (!m) return EMPTY_DETAIL;
+    const obj = JSON.parse(m[0]);
+    return {
+      cnMeaning: String(obj.cnMeaning || '').trim(),
+      enDef: String(obj.enDef || '').trim(),
+      example: String(obj.example || '').trim(),
+      similarWords: Array.isArray(obj.similarWords)
+        ? obj.similarWords.map((x: any) => ({ word: String(x?.word || '').trim(), cn: String(x?.cn || '').trim() })).filter((x: any) => x.word)
+        : [],
+      phrases: Array.isArray(obj.phrases)
+        ? obj.phrases.map((x: any) => ({ en: String(x?.en || '').trim(), cn: String(x?.cn || '').trim() })).filter((x: any) => x.en)
+        : [],
+      tenses: Array.isArray(obj.tenses) ? obj.tenses.map((x: any) => String(x).trim()).filter(Boolean) : [],
+    };
   } catch {
-    return { simpleDef: '', similarWords: [], phrases: [], tenses: [] };
+    return EMPTY_DETAIL;
   }
 }
