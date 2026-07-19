@@ -30,6 +30,8 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const [order, setOrder] = useState<number[]>(() => words.map((_, i) => i));
   const [immersive, setImmersive] = useState(false);
   const [cardExit, setCardExit] = useState(false); // 卡片切换动画
+  const [slideDir, setSlideDir] = useState<'up' | 'down' | 'left' | 'right'>('left');
+  const [cardEnter, setCardEnter] = useState(false); // 新卡片入场动画
   // AI 单词解析
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDetail, setAiDetail] = useState<WordAIDetail | null>(null);
@@ -71,22 +73,30 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   }, [words]);
 
   const next = useCallback(() => {
+    const dir = immersive ? 'up' : 'left';
+    setSlideDir(dir);
     setCardExit(true);
     setTimeout(() => {
       setFlipped(false);
       setIndex((i) => (i + 1) % words.length);
       setCardExit(false);
+      setCardEnter(true);
+      setTimeout(() => setCardEnter(false), 200);
     }, 200);
-  }, [words.length]);
+  }, [words.length, immersive]);
 
   const prev = useCallback(() => {
+    const dir = immersive ? 'down' : 'right';
+    setSlideDir(dir);
     setCardExit(true);
     setTimeout(() => {
       setFlipped(false);
       setIndex((i) => (i - 1 + words.length) % words.length);
       setCardExit(false);
+      setCardEnter(true);
+      setTimeout(() => setCardEnter(false), 200);
     }, 200);
-  }, [words.length]);
+  }, [words.length, immersive]);
 
   const toggleFlip = useCallback(() => {
     setFlipped((f) => !f);
@@ -396,7 +406,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       {/* 翻卡 */}
       <div
         ref={cardRef}
-        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped', jellying && 'card-jelly', cardExit && 'flashcard-exit')}
+        className={cn('flip-card aspect-[3/2] w-full max-w-2xl', flipped && 'flipped', jellying && 'card-jelly', cardExit && `flashcard-exit-${slideDir}`, cardEnter && `flashcard-enter-${slideDir}`)}
         style={{
           transform: pressed
             ? `perspective(800px) scale(0.95) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`

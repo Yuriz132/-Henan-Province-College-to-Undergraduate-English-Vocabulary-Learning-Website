@@ -562,13 +562,46 @@
   transition: transform 0.3s ease-in !important;
 }
 
-/* 卡片切出动画 */
-.flashcard-exit {
-  animation: cardSlideOut 0.2s ease-out forwards;
-}
-@keyframes cardSlideOut {
+/* 卡片切出/入场动画 — 四方向 */
+.flashcard-exit-left { animation: cardSlideOutLeft 0.22s ease-out forwards; }
+.flashcard-exit-right { animation: cardSlideOutRight 0.22s ease-out forwards; }
+.flashcard-exit-up { animation: cardSlideOutUp 0.22s ease-out forwards; }
+.flashcard-exit-down { animation: cardSlideOutDown 0.22s ease-out forwards; }
+.flashcard-enter-left { animation: cardSlideInRight 0.22s ease-out forwards; }
+.flashcard-enter-right { animation: cardSlideInLeft 0.22s ease-out forwards; }
+.flashcard-enter-up { animation: cardSlideInDown 0.22s ease-out forwards; }
+.flashcard-enter-down { animation: cardSlideInUp 0.22s ease-out forwards; }
+@keyframes cardSlideOutLeft {
   from { opacity: 1; transform: translateX(0); }
   to { opacity: 0; transform: translateX(-30px); }
+}
+@keyframes cardSlideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+@keyframes cardSlideOutUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-30px); }
+}
+@keyframes cardSlideOutDown {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(30px); }
+}
+@keyframes cardSlideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes cardSlideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes cardSlideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cardSlideInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ============================================================
