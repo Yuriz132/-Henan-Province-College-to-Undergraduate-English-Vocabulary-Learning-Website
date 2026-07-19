@@ -6,9 +6,20 @@ import { z } from 'zod'
 import { authMiddleware } from './auth'
 
 // ============================================
-// 违禁词过滤（使用 DFA 开源库 sensitive-word-filter，支持中英文）
+// 违禁词过滤（同步实现，无异步初始化竞态问题）
 // ============================================
-const wc = require('sensitive-word-filter')
+const FORBIDDEN_WORDS = [
+  'fuck', 'shit', 'damn', 'ass', 'bitch', 'bastard', 'dick', 'piss', 'cock',
+  '操', '草', '傻逼', '尼玛', '妈的', '你妈', '死妈', '草泥马', '日你',
+  '鸡巴', '狗屎', '废物', '去死', '沙比', '煞笔', '脑残', '智障',
+  '习近', '毛主',
+]
+
+function hasForbiddenWord(text: string): boolean {
+  if (!text) return false
+  const lower = text.toLowerCase().replace(/[\s-_\u200b]+/g, '')
+  return FORBIDDEN_WORDS.some((w) => lower.includes(w.toLowerCase()))
+}
 
 function hasForbiddenWord(text: string): boolean {
   if (!text) return false
