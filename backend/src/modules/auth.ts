@@ -302,13 +302,14 @@ authRouter.put('/progress', authMiddleware, async (req: Request, res: Response) 
     plans: incoming.plans ?? user.progress.plans,
     savedArticles: mergedArticles,
   }
-  const knownDelta = Math.max(0, (next.known || []).length - prevKnownLen)
+  // 净变化量（可正可负）：新掌握为正、取消掌握为负，驱动排行榜「今日 / 本周」净增量
+  const knownDelta = (next.known || []).length - prevKnownLen
   user.progress = next
   const users = await loadUsers()
   const idx = users.findIndex((u) => u.username === user.username)
   if (idx >= 0) users[idx] = user
   await saveUsers(users)
-  // 记录当日新增掌握词数，驱动排行榜「今日 / 本周」
-  if (knownDelta > 0) await recordLearningActivity(user.username, knownDelta)
+  // 记录当日「已掌握」净变化，驱动排行榜「今日 / 本周」（delta=0 时跳过）
+  if (knownDelta !== 0) await recordLearningActivity(user.username, knownDelta)
   return res.json(user.progress)
 })

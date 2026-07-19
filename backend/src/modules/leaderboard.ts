@@ -47,17 +47,18 @@ async function saveDaily(d: DailyFile): Promise<void> {
 }
 
 /**
- * 记录某用户当日学习增量（新增掌握词数），供排行榜「今日/本周」统计。
- * 在 PUT /progress 合并 known 后调用；count<=0 时忽略（不计退步/删除）。
+ * 记录某用户当日「已掌握」净变化量（可正可负），供排行榜「今日/本周」统计。
+ * 在 PUT /progress 合并 known 后调用；delta 为本次 known 数组长度的净变化
+ * （新掌握为正、取消掌握为负），累加后按 0 兜底，确保「今日/本周」反映净增量。
  * 日期口径与 GET /leaderboard 的 todayStr() 保持一致（UTC，避免读写错位）。
  */
-export async function recordLearningActivity(username: string, count: number): Promise<void> {
-  if (!username || count <= 0) return
+export async function recordLearningActivity(username: string, delta: number): Promise<void> {
+  if (!username || delta === 0) return
   const daily = await loadDaily()
   const t = todayStr()
   if (!daily[username]) daily[username] = {}
   const cur = daily[username][t] || { reviewed: 0, timestamp: 0 }
-  daily[username][t] = { reviewed: cur.reviewed + count, timestamp: Date.now() }
+  daily[username][t] = { reviewed: Math.max(0, cur.reviewed + delta), timestamp: Date.now() }
   await saveDaily(daily)
 }
 
