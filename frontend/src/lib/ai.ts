@@ -204,3 +204,41 @@ export async function aiExplainWord(word: string, meaning: string): Promise<Word
     return EMPTY_DETAIL;
   }
 }
+
+/** 单词例句：英文句子 + 中文翻译 */
+export interface ExampleSentence {
+  en: string;
+  zh: string;
+}
+
+/**
+ * 为单词生成 2-3 个地道、自然、适合专升本难度的英文例句（含中文翻译）。
+ * 走后端代理 /api/ai/chat（agnes-1.5-flash），严格 JSON 输出。
+ * 出错或解析失败时返回空数组，不抛异常。
+ */
+export async function aiExampleSentences(word: string, meaning: string): Promise<ExampleSentence[]> {
+  const sys = `你是一位专升本英语老师。为给定单词生成 2-3 个地道、自然、语境真实的英文例句，每句配中文翻译。
+要求：
+- 例句难度适合专升本，避免生造或过于生僻的表达
+- 目标单词在句中自然出现
+- 输出严格 JSON，不要包含 JSON 之外的任何文字：{"sentences":[{"en":"英文例句","zh":"中文翻译"}]}
+- en 字段只使用英文与必要标点，不要包含中文`;
+  const text = await aiChat(
+    [
+      { role: 'system', content: sys },
+      { role: 'user', content: `单词：${word}\n中文释义：${meaning || '无'}\n请输出 JSON。` },
+    ],
+    { model: 'agnes-1.5-flash', max_tokens: 700, temperature: 0.6 }
+  );
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return [];
+    const obj = JSON.parse(m[0]);
+    const arr = Array.isArray(obj.sentences) ? obj.sentences : [];
+    return arr
+      .map((x: any) => ({ en: String(x?.en || '').trim(), zh: String(x?.zh || '').trim() }))
+      .filter((x: any) => x.en);
+  } catch {
+    return [];
+  }
+}

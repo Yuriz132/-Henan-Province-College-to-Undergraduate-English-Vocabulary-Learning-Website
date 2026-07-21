@@ -1,14 +1,33 @@
-import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2, Sparkles, Loader2, X } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 import { speakWord } from '@/lib/speak';
-import { aiExplainWord, type WordAIDetail } from '@/lib/ai';
+import { aiExplainWord, type WordAIDetail, type ExampleSentence } from '@/lib/ai';
+import DailyWallpaper from '@/components/DailyWallpaper';
+import { useExamples } from '@/hooks/use-examples';
 
 // 评论区按需加载，避免 CloudBase SDK 拖慢首屏
 const WordComments = lazy(() =>
   import('@/components/WordComments').then((m) => ({ default: m.WordComments }))
 );
+
+/** 在例句中高亮目标单词（忽略大小写，整词匹配） */
+function highlightWord(sentence: string, word?: string): ReactNode {
+  if (!word) return sentence;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`\\b(${escaped})\\b`, 'gi');
+  const parts = sentence.split(re);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.toLowerCase() === word.toLowerCase()
+          ? <span key={i} className="bbdc-hl">{p}</span>
+          : <span key={i}>{p}</span>
+      )}
+    </>
+  );
+}
 
 interface FlashcardProps {
   words: Word[];
@@ -52,6 +71,76 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   }, [words]);
 
   const current = words[order[index]];
+
+  // 例句（不背单词：AI 生成地道例句，缓存到 localStorage）
+  const [examples, setExamples] = useState<ExampleSentence[]>([]);
+  const { getExamples, regenerate, loading: exLoading, error: exError } = useExamples();
+
+  const loadExamples = useCallback(async () => {
+    if (!current) return;
+    const list = await getExamples(current);
+    setExamples(list);
+  }, [current, getExamples]);
+
+  const regen = useCallback(async () => {
+    if (!current) return;
+    const list = await regenerate(current);
+    setExamples(list);
+  }, [current, regenerate]);
+
+  useEffect(() => {
+    setExamples([]);
+    void loadExamples();
+    // 仅在单词切换时重新加载例句
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id]);
+
+  const renderExamples = (): ReactNode => {
+    if (exLoading && examples.length === 0) {
+      return (
+        <div className="bbdc-examples">
+          <div className="bbdc-loading flex items-center gap-2 text-sm text-white/70">
+            <Loader2 className="h-4 w-4 animate-spin" /> AI 正在生成例句…
+          </div>
+        </div>
+      );
+    }
+    if (exError && examples.length === 0) {
+      return (
+        <div className="bbdc-examples">
+          <div className="bbdc-error text-sm text-white/60">{exError}</div>
+        </div>
+      );
+    }
+    if (examples.length === 0) return null;
+    return (
+      <div className="bbdc-examples">
+        {examples.map((s, i) => (
+          <div key={i} className="bbdc-sentence">
+            <p className="bbdc-en">
+              {highlightWord(s.en, current?.word)}
+              <button
+                type="button"
+                className="bbdc-speak-sm"
+                onClick={(e) => { e.stopPropagation(); speakWord(s.en); }}
+                aria-label="播放例句"
+              >
+                <Volume2 className="h-3.5 w-3.5" />
+              </button>
+            </p>
+            <p className="bbdc-zh">{s.zh}</p>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="bbdc-regen"
+          onClick={(e) => { e.stopPropagation(); void regen(); }}
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> 换一批例句
+        </button>
+      </div>
+    );
+  };
 
   // 打乱顺序
   const toggleShuffle = useCallback(() => {
@@ -284,72 +373,36 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const frontLabel = frontIsEn ? 'Word' : '释义';
   const backLabel = frontIsEn ? '释义' : 'Word';
 
-  const frontContent = frontIsEn ? (
+  // 正面：固定为「单词面」（大字号单词 + 音标 + 发音 + 提示）
+  const frontContent = (
     <>
-      <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{frontLabel}</div>
-      <h2 className="relative z-[2] text-center font-bold text-foreground text-gradient"
-        style={{ fontSize: 'var(--font-size-display)' }}
-      >
+      <div className="bbdc-label">{frontLabel}</div>
+      <h2 className="bbdc-word" style={{ fontSize: 'var(--font-size-display)' }}>
         {current.word}
       </h2>
-      {current.phonetic && (
-        <p className="relative z-[2] mt-3 text-center font-mono text-lg text-muted-foreground">{current.phonetic}</p>
-      )}
-      <button
-        onClick={(e) => { e.stopPropagation(); speak(); }}
-        className="liquid-glass liquid-glass-shine relative z-[2] mt-5 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
-      >
-        <Volume2 className="h-4 w-4" /> 发音
-      </button>
-    </>
-  ) : (
-    <>
-      <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{frontLabel}</div>
-      <p className="relative z-[2] max-w-xl text-center text-xl leading-relaxed text-foreground" style={{ opacity: 0.95 }}>
-        {current.meaning}
-      </p>
+      <div className="bbdc-phon-row">
+        {current.phonetic && <span className="bbdc-phon">{current.phonetic}</span>}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); speak(); }}
+          className="bbdc-speaker"
+          aria-label="发音"
+        >
+          <Volume2 className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="bbdc-hint">点击查看释义与例句</p>
     </>
   );
 
-  const backContent = frontIsEn ? (
+  // 反面：固定为「释义 + 例句面」
+  const backContent = (
     <>
-      <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{backLabel}</div>
-      <h3
-        className="relative z-[2] mb-2 max-w-full text-center font-bold text-foreground whitespace-nowrap"
-        style={{ fontSize: `${current.word.length > 12 ? '1.2rem' : current.word.length > 9 ? '1.45rem' : current.word.length > 6 ? '1.65rem' : '1.875rem'}`, lineHeight: 1.1 }}
-      >
-        {current.word}
-      </h3>
-      {current.phonetic && (
-        <p className="relative z-[2] mb-3 text-center font-mono text-base text-muted-foreground">{current.phonetic}</p>
-      )}
-      <button
-        onClick={(e) => { e.stopPropagation(); speak(); }}
-        className="liquid-glass liquid-glass-shine relative z-[2] mt-4 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
-      >
-        <Volume2 className="h-4 w-4" /> 发音
-      </button>
-      <p className="relative z-[2] mt-4 max-w-xl text-center text-lg leading-relaxed text-foreground" style={{ opacity: 0.9 }}>
-        {current.meaning}
-      </p>
-    </>
-  ) : (
-    <>
-      <div className="relative z-[2] mb-3 text-xs uppercase tracking-widest text-muted-foreground">{backLabel}</div>
-      <h2 className="relative z-[2] text-center font-bold text-foreground text-gradient"
-        style={{ fontSize: 'var(--font-size-display)' }}
-      >
-        {current.word}
-      </h2>
-      {current.phonetic && (
-        <p className="relative z-[2] mt-3 text-center font-mono text-lg text-muted-foreground">{current.phonetic}</p>
-      )}
-      <button
-        onClick={(e) => { e.stopPropagation(); speak(); }}
-        className="liquid-glass liquid-glass-shine relative z-[2] mt-5 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-all hover:text-primary active:scale-95"
-      >
-        <Volume2 className="h-4 w-4" /> 发音
-      </button>
+      <div className="bbdc-label">{backLabel}</div>
+      <h2 className="bbdc-word" style={{ fontSize: 'var(--font-size-display)' }}>{current.word}</h2>
+      {current.phonetic && <p className="bbdc-phon bbdc-phon-center">{current.phonetic}</p>}
+      <p className="bbdc-meaning">{current.meaning}</p>
+      {renderExamples()}
     </>
   );
 
@@ -358,11 +411,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   if (immersive) {
     return (
       <div
-        className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-[oklch(0.15_0.03_270/0.45)] px-6 py-10 backdrop-blur-xl"
+        className="bbdc-immersive fixed inset-0 z-[60] flex flex-col items-center justify-center px-6 py-10"
         style={{ touchAction: 'none' }} /* 禁止页面滚动，纵向滑动完全用于切换单词 */
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
+        <DailyWallpaper />
         {/* 唯一的退出方式：固定在屏幕右上角的小号缩小按钮 */}
         <button
           onClick={exitImmersive}
@@ -406,6 +460,7 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           <p className="relative z-[2] mt-3 text-center text-lg text-muted-foreground font-medium">
             {current.meaning}
           </p>
+          {renderExamples()}
         </div>
 
         {/* 掌握 / 收藏 / AI 三按钮 */}
@@ -456,7 +511,8 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-100px)] flex-col items-center justify-center px-4 py-6">
+    <div className="bbdc-study relative flex min-h-[calc(100vh-100px)] flex-col items-center justify-center px-4 py-6">
+      <DailyWallpaper />
       {/* 顶部信息 + 模式切换 */}
       <div className="mb-4 flex w-full max-w-2xl items-center justify-between">
         <div className="text-sm text-muted-foreground">
@@ -552,12 +608,12 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
       >
         <div className="flip-card-inner">
           {/* 正面 */}
-          <div className="flip-card-face liquid-glass flex flex-col p-8" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
+          <div className="flip-card-face bbdc-face flex flex-col p-8" style={{ borderRadius: 'calc(var(--radius) + 12px)' }}>
             <div className="flex w-full flex-1 flex-col items-center justify-center text-center">{frontContent}</div>
             <p className="pt-4 text-center text-xs text-muted-foreground/60">点击翻面 (空格)</p>
           </div>
           {/* 背面 */}
-          <div className="flip-card-face flip-card-back liquid-glass-accent liquid-glass flex flex-col p-8"
+          <div className="flip-card-face flip-card-back bbdc-face flex flex-col p-8"
             style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
           >
             <div className="flex w-full flex-1 flex-col items-center justify-center text-center">{backContent}</div>

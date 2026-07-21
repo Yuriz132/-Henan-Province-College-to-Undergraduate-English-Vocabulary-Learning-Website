@@ -873,3 +873,156 @@ a.liquid-glass:active {
   background: oklch(1 0 0 / 0.25);
 }
 
+/* ============================================================
+   不背单词升级：每日壁纸 + 极简卡面
+   ============================================================ */
+.daily-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.daily-wallpaper-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.6;
+}
+
+/* 正常学习屏：壁纸作背景，内容浮于其上 */
+.bbdc-study > * { position: relative; z-index: 1; }
+.bbdc-study > .daily-wallpaper { z-index: 0; }
+.bbdc-immersive { background: transparent; }
+
+/* 极简卡面：深色磨砂玻璃（覆盖原 liquid-glass 的默认外观） */
+.bbdc-face {
+  background: rgba(255, 255, 255, 0.10);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* 卡片内文字层级 */
+.bbdc-label {
+  margin-bottom: 0.75rem;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+.bbdc-word {
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+.bbdc-phon-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.bbdc-phon {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+.bbdc-phon-center { text-align: center; margin-top: 0.5rem; }
+.bbdc-speaker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 120ms ease-out;
+}
+.bbdc-speaker:hover { color: #fff; background: rgba(255, 255, 255, 0.22); }
+.bbdc-speaker:active { transform: scale(0.92); }
+.bbdc-hint {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+.bbdc-meaning {
+  max-width: 36rem;
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* 例句列表 */
+.bbdc-examples {
+  width: 100%;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.bbdc-sentence {
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.bbdc-en {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #fff;
+}
+.bbdc-hl {
+  color: var(--primary);
+  font-weight: 700;
+}
+.bbdc-zh {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.7);
+}
+.bbdc-speak-sm {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.1rem;
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.65);
+  transition: all 120ms ease-out;
+}
+.bbdc-speak-sm:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
+.bbdc-regen {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  transition: all 120ms ease-out;
+}
+.bbdc-regen:hover { color: #fff; background: rgba(255, 255, 255, 0.2); }
+.bbdc-regen:active { transform: scale(0.96); }
+.bbdc-loading, .bbdc-error { padding: 0.5rem 0.25rem; }
+
