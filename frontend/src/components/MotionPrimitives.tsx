@@ -1,7 +1,5 @@
 import { motion, type Variants, type HTMLMotionProps, useReducedMotion } from 'framer-motion';
 import { forwardRef, type ReactNode, type CSSProperties } from 'react';
-import { getNavDirection } from '@/lib/navDirection';
-import { STAGGER_DISTANCE } from '@/lib/stagger';
 
 // ── Shared easing & duration tokens ──
 const ease = [0.25, 0.46, 0.45, 0.94] as const;
@@ -12,11 +10,11 @@ const springBounce = { type: 'spring', damping: 20, stiffness: 300 } as const;
 const explodeSpring = { type: 'spring' as const, damping: 28, stiffness: 240 };
 
 /**
- * 是否启用「错落飞入」入场动画。
- * 已移植鸿蒙 Tab 错落切换：FlyIn / ExplodeIn 沿路由切换方向做分块错落滑入/滑出。
- * 设为 false 则退化为静态渲染（保留 reduced-motion 用户的等价降级）。
+ * 是否启用「开屏飞入」入场动画。
+ * 用户要求关闭开屏飞入特效，故设为 false：FlyIn / ExplodeIn 直接渲染内容，
+ * 不再做缩放/位移飞入；hover 抬升、页面切换等其它动效不受影响。
  */
-const ENABLE_FLY_IN = true;
+const ENABLE_FLY_IN = false;
 
 // ── Variant factories ──
 export const fadeUp: Variants = {
@@ -82,33 +80,6 @@ export const explodeIn: Variants = {
   },
 };
 
-/**
- * flyInStagger — 鸿蒙 Tab 错落切换的 Web 移植变体（方向感知）。
- * 函数形式在动画时刻实时读取 getNavDirection()，保证「退场旧页」与「进场新页」
- * 使用同一个切换方向（避免旧页反向滑出）。
- *   left  (前进)：入场从右(+x)滑入，出场向左(-x)滑出
- *   right (后退)：入场从左(-x)滑入，出场向右(+x)滑出
- */
-export const flyInStagger: Variants = {
-  hidden: () => {
-    const d = getNavDirection();
-    return { opacity: 0, x: d === 'left' ? STAGGER_DISTANCE : -STAGGER_DISTANCE };
-  },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { type: 'spring', stiffness: 260, damping: 26 },
-  },
-  exit: () => {
-    const d = getNavDirection();
-    return {
-      opacity: 0,
-      x: d === 'left' ? -STAGGER_DISTANCE : STAGGER_DISTANCE,
-      transition: { duration: 0.22, ease: 'easeIn' },
-    };
-  },
-};
-
 // ── Stagger container ──
 export const staggerContainer = (stagger = 0.1, delay = 0): Variants => ({
   hidden: {},
@@ -163,22 +134,34 @@ interface FlyInProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 }
 
 export const FlyIn = forwardRef<HTMLDivElement, FlyInProps>(
-  ({ children, variants = flyInStagger, delay = 0, className, mode: _mode = 'view', once: _once = true, amount: _amount = 0.15, ...props }, ref) => {
+  ({ children, variants = flyIn, delay = 0, className, once = true, amount = 0.15, mode = 'view', ...props }, ref) => {
     const prefersReduced = useReducedMotion();
     if (!ENABLE_FLY_IN || prefersReduced) {
       return <div ref={ref} className={className} {...(props as Record<string, unknown>)}>{children}</div>;
     }
 
+    const shared = {
+      ref,
+      variants,
+      initial: 'hidden' as const,
+      className,
+      ...props,
+    };
+
+    if (mode === 'mount') {
+      return (
+        <motion.div {...shared} animate="visible" transition={delay ? { delay } : undefined}>
+          {children}
+        </motion.div>
+      );
+    }
+
     return (
       <motion.div
-        ref={ref}
-        variants={variants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
+        {...shared}
+        whileInView="visible"
+        viewport={{ once, amount }}
         transition={delay ? { delay } : undefined}
-        className={className}
-        {...(props as Record<string, unknown>)}
       >
         {children}
       </motion.div>
@@ -197,7 +180,7 @@ interface ExplodeInProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 }
 
 export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
-  ({ children, delay = 0, className, initialScale: _initialScale = 0.5, style, ...props }, ref) => {
+  ({ children, delay = 0, className, initialScale = 0.5, style, ...props }, ref) => {
     const prefersReduced = useReducedMotion();
 
     if (!ENABLE_FLY_IN || prefersReduced) {
@@ -207,15 +190,13 @@ export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
     return (
       <motion.div
         ref={ref}
-        variants={flyInStagger}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        transition={delay ? { delay } : undefined}
+        initial={{ opacity: 0, scale: initialScale }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ ...explodeSpring, delay: delay || undefined }}
         className={className}
         // 以顶部为缩放原点：缩放时从顶部向下展开，避免"从中间蹦到顶端"的视觉跳变
         style={{ transformOrigin: 'top center', ...style }}
-        {...(props as Record<string, unknown>)}
+        {...props}
       >
         {children}
       </motion.div>
