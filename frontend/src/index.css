@@ -1026,3 +1026,42 @@ a.liquid-glass:active {
 .bbdc-regen:active { transform: scale(0.96); }
 .bbdc-loading, .bbdc-error { padding: 0.5rem 0.25rem; }
 
+/* 例句中的英文单词：可点击发音（点哪读哪） */
+.bbdc-word-tap {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 1px;
+  transition: background 120ms ease-out;
+}
+.bbdc-word-tap:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+/* 卡片背面「英文释义」（柯林斯双解风格） */
+.bbdc-en-def {
+  max-width: 36rem;
+  margin-top: 0.4rem;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+/* 发音口音切换（美/英） */
+.bbdc-accent-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 120ms ease-out;
+}
+.bbdc-accent-toggle:hover { color: #fff; background: rgba(255, 255, 255, 0.22); }
+.bbdc-accent-toggle:active { transform: scale(0.92); }
+

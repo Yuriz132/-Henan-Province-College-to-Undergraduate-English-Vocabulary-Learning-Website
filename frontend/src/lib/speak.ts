@@ -5,6 +5,8 @@
  * （原先的 CloudBase 云函数代理已移除，避免跨域依赖与控制台噪音）。
  */
 
+import { getAccent, type Accent } from './accent';
+
 let voices: SpeechSynthesisVoice[] = [];
 let unlocked = false;
 let voiceLoadAttempted = false;
@@ -76,10 +78,11 @@ function hasEnglishVoice(): boolean {
   return getCachedVoices().some((v) => /^en/i.test(v.lang));
 }
 
-/** 英文兜底：用有道 TTS 音频播放（国内可访问，type=2 为英文） */
-function playYoudaoAudio(text: string) {
+/** 英文兜底：用有道 TTS 音频播放（国内可访问，type=1 英音 / type=2 美音） */
+function playYoudaoAudio(text: string, accent: Accent = 'us') {
   try {
-    const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`;
+    const youdaoType = accent === 'gb' ? 1 : 2;
+    const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${youdaoType}`;
     const audio = new Audio(url);
     audio.play().catch((err) => {
       console.warn('[speak] 有道音频播放失败：', err);
@@ -89,13 +92,16 @@ function playYoudaoAudio(text: string) {
   }
 }
 
-function buildEnglishUtterance(text: string): SpeechSynthesisUtterance {
+function buildEnglishUtterance(text: string, accent: Accent = 'us'): SpeechSynthesisUtterance {
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
+  utter.lang = accent === 'gb' ? 'en-GB' : 'en-US';
   utter.rate = 0.9;
   utter.volume = 1;
   utter.pitch = 1;
-  const voice = voices.find((v) => /en[-_]US/i.test(v.lang)) || voices.find((v) => /^en/i.test(v.lang));
+  const langRe = accent === 'gb' ? /en[-_]GB/i : /en[-_]US/i;
+  const voice =
+    voices.find((v) => langRe.test(v.lang)) ||
+    voices.find((v) => /^en/i.test(v.lang));
   if (voice) utter.voice = voice;
   return utter;
 }
@@ -105,19 +111,20 @@ function buildEnglishUtterance(text: string): SpeechSynthesisUtterance {
  * 策略：有英文语音 → 用 speechSynthesis，并带「未开始发音则切音频兜底」的保护；
  *       无英文语音/不支持 → 直接用有道音频。
  */
-export function speakWord(text: string) {
+export function speakWord(text: string, accent?: Accent) {
   if (typeof window === 'undefined') return;
+  const ac: Accent = accent ?? getAccent();
   getCachedVoices();
   const synthOk = 'speechSynthesis' in window;
 
   if (synthOk && hasEnglishVoice()) {
     let fellBack = false;
-    const utter = buildEnglishUtterance(text);
+    const utter = buildEnglishUtterance(text, ac);
     const guard = window.setTimeout(() => {
       if (!fellBack) {
         fellBack = true;
         console.warn('[speak] 英文 speechSynthesis 未在限定时间内发声，切换有道音频');
-        playYoudaoAudio(text);
+        playYoudaoAudio(text, ac);
       }
     }, 800);
     utter.onstart = () => {
@@ -130,7 +137,7 @@ export function speakWord(text: string) {
       if (!fellBack) {
         fellBack = true;
         console.warn('[speak] 英文 speechSynthesis 出错：', e.error || e, '→ 切换有道音频');
-        playYoudaoAudio(text);
+        playYoudaoAudio(text, ac);
       }
     };
     try {
@@ -139,11 +146,11 @@ export function speakWord(text: string) {
     } catch (err) {
       clearTimeout(guard);
       console.warn('[speak] 英文 speechSynthesis 抛出异常：', err, '→ 切换有道音频');
-      playYoudaoAudio(text);
+      playYoudaoAudio(text, ac);
     }
   } else {
     console.log('[speak] 无英文语音包，使用有道音频：', text);
-    playYoudaoAudio(text);
+    playYoudaoAudio(text, ac);
   }
 }
 

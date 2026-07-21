@@ -3,8 +3,9 @@ import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, 
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 import { speakWord } from '@/lib/speak';
-import { aiExplainWord, type WordAIDetail, type ExampleSentence } from '@/lib/ai';
+import { aiExplainWordCached, type WordAIDetail, type ExampleSentence } from '@/lib/ai';
 import type { ReviewGrade } from '@/lib/reviews';
+import { getAccent, setAccent, type Accent } from '@/lib/accent';
 import DailyWallpaper from '@/components/DailyWallpaper';
 import { useExamples } from '@/hooks/use-examples';
 
@@ -13,19 +14,31 @@ const WordComments = lazy(() =>
   import('@/components/WordComments').then((m) => ({ default: m.WordComments }))
 );
 
-/** 在例句中高亮目标单词（忽略大小写，整词匹配） */
-function highlightWord(sentence: string, word?: string): ReactNode {
-  if (!word) return sentence;
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`\\b(${escaped})\\b`, 'gi');
-  const parts = sentence.split(re);
+/** 例句中每个英文单词可点击发音（仿不背单词"点哪读哪"），目标词高亮 */
+function TappableSentence({ text, highlight }: { text: string; highlight?: string }): ReactNode {
+  // 按单词边界切分；单词可点击发音，标点/空格原样渲染
+  const tokens = text.split(/(\b[\w']+\b)/g).filter(Boolean);
   return (
     <>
-      {parts.map((p, i) =>
-        p.toLowerCase() === word.toLowerCase()
-          ? <span key={i} className="bbdc-hl">{p}</span>
-          : <span key={i}>{p}</span>
-      )}
+      {tokens.map((tok, i) => {
+        const isWord = /^[\w']+$/.test(tok);
+        if (!isWord) return <span key={i}>{tok}</span>;
+        const isHi = !!highlight && tok.toLowerCase() === highlight.toLowerCase();
+        return (
+          <span
+            key={i}
+            className={cn('bbdc-word-tap', isHi && 'bbdc-hl')}
+            role="button"
+            tabIndex={-1}
+            onClick={(e) => {
+              e.stopPropagation();
+              speakWord(tok);
+            }}
+          >
+            {tok}
+          </span>
+        );
+      })}
     </>
   );
 }
@@ -78,6 +91,9 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
   const [examples, setExamples] = useState<ExampleSentence[]>([]);
   const { getExamples, regenerate, loading: exLoading, error: exError } = useExamples();
 
+  // 卡片背面的「英文释义」（柯林斯双解风格），按单词缓存，避免重复消耗 AI 额度
+  const [enDef, setEnDef] = useState('');
+
   const loadExamples = useCallback(async () => {
     if (!current) return;
     const list = await getExamples(current);
@@ -94,6 +110,25 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
     setExamples([]);
     void loadExamples();
     // 仅在单词切换时重新加载例句
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id]);
+
+  // 切换单词时加载「英文释义」：优先本地缓存，未命中再调 AI（每个词仅首次联网）
+  useEffect(() => {
+    if (!current) return;
+    let cancelled = false;
+    setEnDef('');
+    void (async () => {
+      try {
+        const detail = await aiExplainWordCached(current.word, current.meaning);
+        if (!cancelled) setEnDef(detail.enDef || '');
+      } catch {
+        /* 失败不影响主流程 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
@@ -120,7 +155,7 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
         {examples.map((s, i) => (
           <div key={i} className="bbdc-sentence">
             <p className="bbdc-en">
-              {highlightWord(s.en, current?.word)}
+              <TappableSentence text={s.en} highlight={current?.word} />
               <button
                 type="button"
                 className="bbdc-speak-sm"
@@ -206,10 +241,20 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
       if (!current) return;
       onReview?.(current.id, grade);
       if (grade === 'good') onKnown?.(current.id, index + 1);
+      // 不背单词行为：完全不认识(忘记)自动进生词本，已收藏则跳过
+      if (grade === 'forget' && !isStarred?.(current.id)) onStar?.(current.id);
       next();
     },
-    [current, onReview, onKnown, index, next]
+    [current, onReview, onKnown, index, next, isStarred, onStar]
   );
+
+  // 发音口音（英/美），持久化偏好
+  const [accent, setAccentState] = useState<Accent>(() => getAccent());
+  const toggleAccent = useCallback(() => {
+    const nextAccent: Accent = accent === 'us' ? 'gb' : 'us';
+    setAccentState(nextAccent);
+    setAccent(nextAccent);
+  }, [accent]);
 
   // 进入 / 退出沉浸模式
   // 沉浸模式与翻卡学习共用同一个「当前单词」位置：
@@ -403,6 +448,15 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
         >
           <Volume2 className="h-4 w-4" />
         </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); toggleAccent(); }}
+          className="bbdc-accent-toggle"
+          title={accent === 'us' ? '当前美音，点击切换英音' : '当前英音，点击切换美音'}
+          aria-label="切换发音口音"
+        >
+          {accent === 'us' ? '美' : '英'}
+        </button>
       </div>
       <p className="bbdc-hint">点击查看释义与例句</p>
     </>
@@ -415,6 +469,7 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
       <h2 className="bbdc-word" style={{ fontSize: 'var(--font-size-display)' }}>{current.word}</h2>
       {current.phonetic && <p className="bbdc-phon bbdc-phon-center">{current.phonetic}</p>}
       <p className="bbdc-meaning">{current.meaning}</p>
+      {enDef && <p className="bbdc-en-def">{enDef}</p>}
       {renderExamples()}
     </>
   );
@@ -466,6 +521,14 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
                 aria-label="发音"
               >
                 <Volume2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleAccent(); }}
+                className="liquid-glass liquid-glass-shine inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground text-xs font-semibold transition-all hover:text-primary active:scale-90"
+                title={accent === 'us' ? '当前美音，点击切换英音' : '当前英音，点击切换美音'}
+                aria-label="切换发音口音"
+              >
+                {accent === 'us' ? '美' : '英'}
               </button>
             </div>
           )}
@@ -520,7 +583,7 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
               if (aiLoading) return;
               setAiLoading(true); setAiError(''); setAiDetail(null);
               try {
-                const detail = await aiExplainWord(current.word, current.meaning);
+                const detail = await aiExplainWordCached(current.word, current.meaning);
                 setAiDetail(detail);
               } catch { setAiError('AI 解析失败'); }
               finally { setAiLoading(false); }
@@ -594,7 +657,7 @@ export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose
               if (aiLoading) return;
               setAiLoading(true); setAiError(''); setAiDetail(null);
               try {
-                const detail = await aiExplainWord(current.word, current.meaning);
+                const detail = await aiExplainWordCached(current.word, current.meaning);
                 setAiDetail(detail);
               } catch { setAiError('AI 解析失败'); }
               finally { setAiLoading(false); }

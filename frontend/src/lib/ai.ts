@@ -205,6 +205,55 @@ export async function aiExplainWord(word: string, meaning: string): Promise<Word
   }
 }
 
+// ── 单词解析缓存：localStorage 持久化，避免每次切词重复消耗 AI 额度 ──
+const EXPLAIN_CACHE_KEY = 'liquid-words:explain';
+type ExplainCache = Record<string, WordAIDetail>;
+let explainCache: ExplainCache | null = null;
+
+function loadExplainCache(): ExplainCache {
+  if (explainCache) return explainCache;
+  try {
+    const raw = localStorage.getItem(EXPLAIN_CACHE_KEY);
+    explainCache = raw ? (JSON.parse(raw) as ExplainCache) : {};
+  } catch {
+    explainCache = {};
+  }
+  return explainCache;
+}
+
+function saveExplainCache(c: ExplainCache): void {
+  explainCache = c;
+  try {
+    localStorage.setItem(EXPLAIN_CACHE_KEY, JSON.stringify(c));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** 读取单词解析缓存（无则返回 undefined） */
+export function getCachedExplain(word: string): WordAIDetail | undefined {
+  return loadExplainCache()[word.toLowerCase()];
+}
+
+/** 写入单词解析缓存 */
+export function setCachedExplain(word: string, detail: WordAIDetail): void {
+  const c = loadExplainCache();
+  c[word.toLowerCase()] = detail;
+  saveExplainCache(c);
+}
+
+/**
+ * 取单词解析：优先命中本地缓存（不消耗 AI 额度），未命中再调用 AI 并写入缓存。
+ * 用于卡片背面展示「英文释义」等，确保每个单词仅首次联网解析。
+ */
+export async function aiExplainWordCached(word: string, meaning: string): Promise<WordAIDetail> {
+  const hit = getCachedExplain(word);
+  if (hit) return hit;
+  const detail = await aiExplainWord(word, meaning);
+  setCachedExplain(word, detail);
+  return detail;
+}
+
 /** 单词例句：英文句子 + 中文翻译 */
 export interface ExampleSentence {
   en: string;

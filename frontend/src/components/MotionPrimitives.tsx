@@ -9,6 +9,13 @@ const springBounce = { type: 'spring', damping: 20, stiffness: 300 } as const;
 /** 开屏飞入：纯 scale + opacity，零位移避免跨屏跳跃 */
 const explodeSpring = { type: 'spring' as const, damping: 28, stiffness: 240 };
 
+/**
+ * 是否启用「开屏飞入」入场动画。
+ * 用户要求关闭开屏飞入特效，故设为 false：FlyIn / ExplodeIn 直接渲染内容，
+ * 不再做缩放/位移飞入；hover 抬升、页面切换等其它动效不受影响。
+ */
+const ENABLE_FLY_IN = false;
+
 // ── Variant factories ──
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 32 },
@@ -129,7 +136,7 @@ interface FlyInProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 export const FlyIn = forwardRef<HTMLDivElement, FlyInProps>(
   ({ children, variants = flyIn, delay = 0, className, once = true, amount = 0.15, mode = 'view', ...props }, ref) => {
     const prefersReduced = useReducedMotion();
-    if (prefersReduced) {
+    if (!ENABLE_FLY_IN || prefersReduced) {
       return <div ref={ref} className={className} {...(props as Record<string, unknown>)}>{children}</div>;
     }
 
@@ -176,7 +183,7 @@ export const ExplodeIn = forwardRef<HTMLDivElement, ExplodeInProps>(
   ({ children, delay = 0, className, initialScale = 0.5, style, ...props }, ref) => {
     const prefersReduced = useReducedMotion();
 
-    if (prefersReduced) {
+    if (!ENABLE_FLY_IN || prefersReduced) {
       return <div ref={ref} className={className} style={style as CSSProperties} {...(props as Record<string, unknown>)}>{children}</div>;
     }
 
