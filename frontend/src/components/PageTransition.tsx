@@ -59,7 +59,18 @@ const HARMONY_TRANSITION = { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const }
 const FADETHROUGH_TRANSITION = { duration: 0.32, ease: [0.4, 0, 0.2, 1] as const };
 const DEFAULT_TRANSITION = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const };
 
+/**
+ * 是否启用「路由切换页面动画」。
+ * 用户要求取消切换时的页面动画，故设为 false：PageTransition 直接渲染内容，
+ * 路由切换即时完成，不再有淡入/缩放过渡。
+ */
+const ENABLE_PAGE_TRANSITION = false;
+
 export function PageTransition({ children, transition = "fade" }: PageTransitionProps) {
+  if (!ENABLE_PAGE_TRANSITION) {
+    return <div>{children}</div>;
+  }
+
   const v = variants[transition];
 
   const transitionConfig =
