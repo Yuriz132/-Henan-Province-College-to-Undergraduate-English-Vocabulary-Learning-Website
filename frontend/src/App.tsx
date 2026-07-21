@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatedRoutes } from "@/components/AnimatedRoutes";
 import { PageTransition } from "@/components/PageTransition";
 import { LiquidBackground } from "@/components/LiquidBackground";
-import { LiquidGlassDefs } from "@/components/LiquidGlassDefs";
 import { Navbar } from "@/components/Navbar";
 import { PomodoroTimer } from "@/components/PomodoroTimer";
 import { AuthProvider } from "@/context/AuthContext";
@@ -42,7 +41,6 @@ function App() {
         <Toaster />
         <BrowserRouter>
           <AuthProvider>
-            <LiquidGlassDefs />
             <LiquidBackground />
             <Navbar />
             <main className="relative z-10 min-h-screen pb-12">
