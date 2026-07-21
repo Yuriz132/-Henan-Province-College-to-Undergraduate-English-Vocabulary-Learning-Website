@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain, Play } from 'lucide-react';
+import { BookOpen, Search, Star, Layers, TrendingUp, MessageSquare, Target, Users, Activity, Sparkles, FileText, Brain, Play, History } from 'lucide-react';
 import { allWords, partStructure, getListKey } from '@/lib/words-data';
-import { useStarred, useKnown, useProgress } from '@/hooks/use-storage';
+import { useStarred, useKnown, useProgress, useReviews } from '@/hooks/use-storage';
 import { useDailyStats } from '@/hooks/use-daily-stats';
 import { FlyIn, ExplodeIn } from '@/components/MotionPrimitives';
 import { StudyPlans } from '@/components/StudyPlans';
@@ -46,6 +46,8 @@ export default function Index() {
   const { count: starredCount } = useStarred();
   const { count: knownCount } = useKnown();
   const { progress } = useProgress();
+  const { dueToday } = useReviews();
+  const dueCount = dueToday();
   const { streak, dailyAverage, last30days, recordDay } = useDailyStats();
   const [planOpen, setPlanOpen] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -181,6 +183,36 @@ export default function Index() {
           <Users className="h-3 w-3" />
           当前已有 <span className="font-medium text-foreground/80">{totalUsers}</span> 位同学在学
         </p>
+      </FlyIn>
+
+      {/* 每日目标 + 待复习入口 */}
+      <FlyIn delay={0.03}>
+        <div
+          className="liquid-glass card-bounce mb-5 overflow-hidden p-4 sm:p-5"
+          style={{ borderRadius: 'calc(var(--radius) + 12px)' }}
+        >
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15">
+                <History className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-foreground">
+                  今日待复习 <span className="text-primary">{dueCount}</span> 词
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  每日目标 · 新学 45 · 复习 50
+                </div>
+              </div>
+            </div>
+            <Link
+              to="/review"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-5 py-1.5 text-sm font-semibold text-primary transition-all hover:bg-primary/25 hover:-translate-y-0.5 active:scale-95"
+            >
+              <Play className="h-3.5 w-3.5" /> {dueCount > 0 ? '去复习' : '开始学习'}
+            </Link>
+          </div>
+        </div>
       </FlyIn>
 
       {/* 统计 — 4 张卡片（2列2排），分别跳转不同页面 */}

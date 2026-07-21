@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef, lazy, Suspense, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2, Sparkles, Loader2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Check, RotateCcw, Shuffle, Languages, Volume2, Maximize2, Minimize2, Sparkles, Loader2, X, Meh, Undo2 } from 'lucide-react';
 import type { Word } from '@/types/word';
 import { cn } from '@/lib/utils';
 import { speakWord } from '@/lib/speak';
 import { aiExplainWord, type WordAIDetail, type ExampleSentence } from '@/lib/ai';
+import type { ReviewGrade } from '@/lib/reviews';
 import DailyWallpaper from '@/components/DailyWallpaper';
 import { useExamples } from '@/hooks/use-examples';
 
@@ -33,6 +34,7 @@ interface FlashcardProps {
   words: Word[];
   onStar?: (id: number) => void;
   onKnown?: (id: number, reviewedCount: number) => void;
+  onReview?: (id: number, grade: ReviewGrade) => void;
   isStarred?: (id: number) => boolean;
   onClose?: () => void;
   title?: string;
@@ -41,7 +43,7 @@ interface FlashcardProps {
 type CardMode = 'en2cn' | 'cn2en';
 
 /** 翻卡学习组件 — 全屏液态玻璃翻卡，支持英→中 / 中→英双向 */
-export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }: FlashcardProps) {
+export function Flashcard({ words, onStar, onKnown, onReview, isStarred, onClose, title }: FlashcardProps) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [mode, setMode] = useState<CardMode>('en2cn');
@@ -197,6 +199,17 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
   const speak = useCallback(() => {
     if (current) speakWord(current.word);
   }, [current]);
+
+  // 间隔复习三级评级：认识/模糊/忘记。认识同时标记「已掌握」。
+  const handleReview = useCallback(
+    (grade: ReviewGrade) => {
+      if (!current) return;
+      onReview?.(current.id, grade);
+      if (grade === 'good') onKnown?.(current.id, index + 1);
+      next();
+    },
+    [current, onReview, onKnown, index, next]
+  );
 
   // 进入 / 退出沉浸模式
   // 沉浸模式与翻卡学习共用同一个「当前单词」位置：
@@ -463,16 +476,35 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           {renderExamples()}
         </div>
 
-        {/* 掌握 / 收藏 / AI 三按钮 */}
+        {/* 认识 / 模糊 / 忘记 / 收藏 / AI 按钮 */}
         <div className="relative z-[2] mt-6 flex items-center gap-3">
-          {onKnown && (
-            <button
-              onClick={() => { onKnown(current.id, index + 1); next(); }}
-              className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
-            >
-              <Check className="h-4 w-4 text-success" />
-              <span className="text-sm text-muted-foreground">掌握</span>
-            </button>
+          {onReview && (
+            <>
+              <button
+                onClick={() => handleReview('good')}
+                className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
+                title="认识：已掌握，按遗忘曲线安排下次复习"
+              >
+                <Check className="h-4 w-4 text-success" />
+                <span className="text-sm text-success">认识</span>
+              </button>
+              <button
+                onClick={() => handleReview('vague')}
+                className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-warning active:scale-95"
+                title="模糊：有点印象，明天再复习"
+              >
+                <Meh className="h-4 w-4 text-warning" />
+                <span className="text-sm text-warning">模糊</span>
+              </button>
+              <button
+                onClick={() => handleReview('forget')}
+                className="liquid-glass liquid-glass-shine flex h-11 items-center gap-1.5 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-destructive active:scale-95"
+                title="忘记：立即重学"
+              >
+                <Undo2 className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-destructive">忘记</span>
+              </button>
+            </>
           )}
           {onStar && (
             <button
@@ -645,14 +677,33 @@ export function Flashcard({ words, onStar, onKnown, isStarred, onClose, title }:
           </button>
         )}
 
-        {onKnown && (
-          <button
-            onClick={() => { onKnown?.(current.id, index + 1); next(); }}
-            className="liquid-glass liquid-glass-shine flex h-12 items-center gap-2 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
-          >
-            <Check className="h-5 w-5 text-success" />
-            <span className="text-sm text-muted-foreground">掌握</span>
-          </button>
+        {onReview && (
+          <>
+            <button
+              onClick={() => handleReview('good')}
+              className="liquid-glass liquid-glass-shine flex h-12 items-center gap-2 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-success active:scale-95"
+              title="认识：已掌握，按遗忘曲线安排下次复习"
+            >
+              <Check className="h-5 w-5 text-success" />
+              <span className="text-sm text-success">认识</span>
+            </button>
+            <button
+              onClick={() => handleReview('vague')}
+              className="liquid-glass liquid-glass-shine flex h-12 items-center gap-2 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-warning active:scale-95"
+              title="模糊：有点印象，明天再复习"
+            >
+              <Meh className="h-5 w-5 text-warning" />
+              <span className="text-sm text-warning">模糊</span>
+            </button>
+            <button
+              onClick={() => handleReview('forget')}
+              className="liquid-glass liquid-glass-shine flex h-12 items-center gap-2 rounded-full px-5 transition-all hover:-translate-y-0.5 hover:text-destructive active:scale-95"
+              title="忘记：立即重学"
+            >
+              <Undo2 className="h-5 w-5 text-destructive" />
+              <span className="text-sm text-destructive">忘记</span>
+            </button>
+          </>
         )}
 
         <button

@@ -3,6 +3,7 @@
 
 import type { StudyPlan } from '@/lib/studyPlans';
 import type { SavedArticle } from '@/lib/authApi';
+import type { ReviewRecord } from '@/lib/reviews';
 
 export type ProgressSlice =
   | { starred: number[] }
@@ -10,6 +11,7 @@ export type ProgressSlice =
   | { progress: Record<string, { reviewed: number; total: number }> }
   | { plans: StudyPlan[] }
   | { savedArticles: SavedArticle[] }
+  | { reviews: Record<number, ReviewRecord> }
 
 type Uploader = (slice: ProgressSlice) => Promise<void>
 

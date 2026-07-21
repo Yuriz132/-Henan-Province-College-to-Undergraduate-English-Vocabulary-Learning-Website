@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { apiLogin, apiRegister, apiGetProgress, apiSaveProgress, type CloudProgress, type SavedArticle } from '@/lib/authApi'
 import { setCloudUploader } from '@/lib/progressSync'
 import type { StudyPlan } from '@/lib/studyPlans'
+import type { ReviewRecord } from '@/lib/reviews'
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
@@ -10,6 +11,7 @@ const USER_KEY = 'auth_user'
 const STARRED_KEY = 'liquid-words:starred'
 const KNOWN_KEY = 'liquid-words:known'
 const PROGRESS_KEY = 'liquid-words:progress'
+const REVIEWS_KEY = 'liquid-words:reviews'
 const PLANS_KEY = 'liquid-words:plans'
 const SAVED_ARTICLES_KEY = 'liquid-words:saved-articles'
 
@@ -67,6 +69,17 @@ function readSavedArticles(): SavedArticle[] {
 function writeSavedArticles(v: SavedArticle[]) {
   localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(v))
 }
+function readReviews(): Record<number, ReviewRecord> {
+  try {
+    const raw = localStorage.getItem(REVIEWS_KEY)
+    return raw ? (JSON.parse(raw) as Record<number, ReviewRecord>) : {}
+  } catch {
+    return {}
+  }
+}
+function writeReviews(v: Record<number, ReviewRecord>) {
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(v))
+}
 /** 已生成文章：按 id 去重，最新在前 */
 function mergeSavedArticles(local: SavedArticle[], cloud: SavedArticle[]): SavedArticle[] {
   const map = new Map<string, SavedArticle>()
@@ -91,6 +104,8 @@ function mergeCloudIntoLocal(cloud: CloudProgress) {
   writeProgress(merged)
   writePlans(mergePlansById(readPlans(), cloud.plans ?? []))
   writeSavedArticles(mergeSavedArticles(readSavedArticles(), cloud.savedArticles ?? []))
+  // 复习安排：按 wordId 覆盖合并（同一词以云端为准，避免丢数据）
+  writeReviews({ ...readReviews(), ...(cloud.reviews ?? {}) })
 }
 
 function localSnapshot(): CloudProgress {
@@ -100,6 +115,7 @@ function localSnapshot(): CloudProgress {
     progress: readProgress(),
     plans: readPlans(),
     savedArticles: readSavedArticles(),
+    reviews: readReviews(),
   }
 }
 

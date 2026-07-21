@@ -2,10 +2,12 @@ import { useCallback, useState } from 'react';
 import { pushToCloud } from '@/lib/progressSync';
 import type { StudyPlan } from '@/lib/studyPlans';
 import type { SavedArticle } from '@/lib/authApi';
+import { computeReview, isReviewDue, type ReviewGrade, type ReviewRecord } from '@/lib/reviews';
 
 const STARRED_KEY = 'liquid-words:starred';
 const PROGRESS_KEY = 'liquid-words:progress';
 const KNOWN_KEY = 'liquid-words:known';
+const REVIEWS_KEY = 'liquid-words:reviews';
 const SAVED_ARTICLES_KEY = 'liquid-words:saved-articles';
 
 function readSet(key: string): Set<number> {
@@ -217,4 +219,58 @@ export function useSavedArticles() {
   }, []);
 
   return { articles, add, remove, clear, count: articles.length };
+}
+
+/** 间隔复习（SRS）：本地存储 + 登录后增量同步到云端 */
+function readReviews(): Record<number, ReviewRecord> {
+  try {
+    const raw = localStorage.getItem(REVIEWS_KEY);
+    return raw ? (JSON.parse(raw) as Record<number, ReviewRecord>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeReviews(map: Record<number, ReviewRecord>) {
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(map));
+  pushToCloud({ reviews: map });
+}
+
+export function useReviews() {
+  const [reviews, setReviews] = useState<Record<number, ReviewRecord>>(() => readReviews());
+
+  /** 记录一次复习评级，更新该词的间隔安排（SM-2 lite） */
+  const scheduleReview = useCallback((id: number, grade: ReviewGrade) => {
+    setReviews((prev) => {
+      const next = { ...prev, [id]: computeReview(prev[id], grade) };
+      writeReviews(next);
+      return next;
+    });
+  }, []);
+
+  /** 该词是否到期需要复习（无记录=新词，默认到期） */
+  const isDue = useCallback(
+    (id: number, now: number = Date.now()) => isReviewDue(reviews[id], now),
+    [reviews]
+  );
+
+  /** 从一批词 id 中筛出当前到期的 */
+  const getDueIds = useCallback(
+    (ids: number[], now: number = Date.now()) =>
+      ids.filter((id) => isReviewDue(reviews[id], now)),
+    [reviews]
+  );
+
+  /** 当前已安排复习（学习过）的词数 */
+  const count = Object.keys(reviews).length;
+
+  /** 今天需要复习的词数（到期时间 <= 当天 23:59:59.999） */
+  const dueToday = useCallback(() => {
+    const now = Date.now();
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+    return Object.values(reviews).filter((r) => r.due <= endOfToday.getTime()).length;
+  }, [reviews]);
+
+  return { reviews, scheduleReview, isDue, getDueIds, count, dueToday };
 }

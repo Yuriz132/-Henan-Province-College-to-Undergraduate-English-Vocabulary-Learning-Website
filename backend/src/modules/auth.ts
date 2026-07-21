@@ -39,12 +39,23 @@ export interface SavedArticle {
   createdAt: number
 }
 
+// SRS 间隔复习记录（与前端 lib/reviews.ts 结构一致；JSON 键为字符串）
+interface ReviewRecord {
+  reps: number
+  ease: number
+  interval: number
+  due: number
+  last: number
+  grade?: 'good' | 'vague' | 'forget'
+}
+
 interface ProgressData {
   starred: number[]
   known: number[]
   progress: Record<string, { reviewed: number; total: number }>
   plans: StudyPlan[]
   savedArticles?: SavedArticle[]
+  reviews?: Record<string, ReviewRecord>
 }
 
 export interface User {
@@ -58,7 +69,7 @@ export interface User {
 
 type AuthedRequest = Request & { user?: User }
 
-const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, plans: [], savedArticles: [] }
+const EMPTY_PROGRESS: ProgressData = { starred: [], known: [], progress: {}, plans: [], savedArticles: [], reviews: {} }
 
 /** 合并已生成文章：按 id 去重，云端优先（incoming 覆盖同 id 的已有项），最新在前 */
 function mergeSavedArticles(existing: SavedArticle[], incoming: SavedArticle[]): SavedArticle[] {
@@ -176,6 +187,15 @@ const savedArticleSchema = z.object({
   createdAt: z.number(),
 })
 
+const reviewRecordSchema = z.object({
+  reps: z.number().int().nonnegative(),
+  ease: z.number(),
+  interval: z.number().nonnegative(),
+  due: z.number(),
+  last: z.number(),
+  grade: z.enum(['good', 'vague', 'forget']).optional(),
+})
+
 const progressSchema = z
   .object({
     starred: z.array(z.number().int()).optional(),
@@ -185,6 +205,7 @@ const progressSchema = z
       .optional(),
     plans: z.array(planSchema).optional(),
     savedArticles: z.array(savedArticleSchema).optional(),
+    reviews: z.record(z.string(), reviewRecordSchema).optional(),
   })
   .refine(
     (d) =>
@@ -192,9 +213,10 @@ const progressSchema = z
       d.known !== undefined ||
       d.progress !== undefined ||
       d.plans !== undefined ||
-      d.savedArticles !== undefined,
+      d.savedArticles !== undefined ||
+      d.reviews !== undefined,
     {
-      message: '至少提供 starred / known / progress / plans / savedArticles 中的一项',
+      message: '至少提供 starred / known / progress / plans / savedArticles / reviews 中的一项',
     }
   )
 
@@ -301,6 +323,10 @@ authRouter.put('/progress', authMiddleware, async (req: Request, res: Response) 
     progress: incoming.progress ?? user.progress.progress,
     plans: incoming.plans ?? user.progress.plans,
     savedArticles: mergedArticles,
+    // 复习安排：按 wordId 合并，同一词以本次上传为准（覆盖）
+    reviews: incoming.reviews
+      ? { ...(user.progress.reviews ?? {}), ...incoming.reviews }
+      : user.progress.reviews,
   }
   // 净变化量（可正可负）：新掌握为正、取消掌握为负，驱动排行榜「今日 / 本周」净增量
   const knownDelta = (next.known || []).length - prevKnownLen

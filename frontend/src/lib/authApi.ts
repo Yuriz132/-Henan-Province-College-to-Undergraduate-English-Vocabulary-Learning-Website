@@ -1,5 +1,6 @@
 import apiClient from './api-client';
 import type { StudyPlan } from '@/lib/studyPlans';
+import type { ReviewRecord } from '@/lib/reviews';
 
 /** 生成的 AI 文章（存入「我的收藏」） */
 export interface SavedArticle {
@@ -18,6 +19,7 @@ export interface CloudProgress {
   progress?: Record<string, { reviewed: number; total: number }>
   plans?: StudyPlan[]
   savedArticles?: SavedArticle[]
+  reviews?: Record<number, ReviewRecord>
 }
 
 export interface AuthResult {
