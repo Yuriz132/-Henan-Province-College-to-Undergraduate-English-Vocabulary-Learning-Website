@@ -119,6 +119,7 @@ export function AIChatFAB() {
       {/* 悬浮按钮 — 右下角固定（和第一版一样） */}
       <LiquidGlass
         as="button"
+        elastic
         onClick={() => setOpen(v => !v)}
         className="liquid-glass liquid-glass-shine bottom-6 right-6 z-[250] flex h-12 w-12 items-center justify-center rounded-full text-muted-foreground transition-all hover:text-primary active:scale-95"
         style={{

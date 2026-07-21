@@ -509,10 +509,13 @@
 .liquid-glass {
   position: relative;
   background: rgba(255, 255, 255, 0.1);
-  /* 注意：默认不再使用 backdrop-filter: blur()，避免磨砂感。
-     需要真实折射的元素由 <LiquidGlass> 组件通过内联
-     backdrop-filter: url(#id) 注入（SVG 位移滤镜），其余元素仅保留
-     半透明底色 + 边缘高光，呈通透玻璃片质感。 */
+  /* 真实液态玻璃折射：由全局 SVG 滤镜 #liquidGlass 提供位移 + 色散(chromatic aberration)。
+     两行声明：第一行是 Safari / 旧内核的纯磨砂回退；第二行 Chrome / Chromium 启用真实折射。
+     （Safari 不支持 backdrop-filter: url()，会丢弃第二行，回退到第一行。） */
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: url(#liquidGlass) blur(2px) saturate(1.6) brightness(1.05);
+  backdrop-filter: url(#liquidGlass) blur(2px) saturate(1.6) brightness(1.05);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-lg);
   box-shadow:
@@ -719,6 +722,23 @@
     inset -1px 0 1px rgba(0, 0, 0, 0.12);
 }
 
+/* 鼠标临近弹性挤压：仅对带 lg-elastic 的元素生效（避免覆盖顶栏隐藏等 transform） */
+.lg-elastic {
+  transform: var(--lg-elastic, none);
+  transition: transform 0.2s ease-out;
+  will-change: transform;
+}
+
+/* 亮背景上的压暗玻璃：深底 + 强阴影，折射更明显 */
+.liquid-glass-overlight {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 16px 70px rgba(0, 0, 0, 0.75),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.2);
+}
+
 /* 强调玻璃 — 用于活跃/选中状态（主色微染） */
 .liquid-glass-accent {
   background: rgba(99, 130, 255, 0.22);
@@ -895,11 +915,14 @@ a.liquid-glass:active {
 .bbdc-study > .daily-wallpaper { z-index: 0; }
 .bbdc-immersive { background: transparent; }
 
-/* 极简卡面：深色磨砂玻璃（覆盖原 liquid-glass 的默认外观） */
+/* 极简卡面：真实液态玻璃折射（翻卡正面 / 背面）
+   两行声明：Safari 回退到纯磨砂；Chrome / Chromium 启用 #liquidGlass 折射。 */
 .bbdc-face {
   background: rgba(255, 255, 255, 0.10);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: url(#liquidGlass) blur(3px) saturate(1.6) brightness(1.05);
+  backdrop-filter: url(#liquidGlass) blur(3px) saturate(1.6) brightness(1.05);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
